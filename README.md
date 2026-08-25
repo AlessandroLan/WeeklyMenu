@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Cosa mangiamo?
 
 Webapp condivisa per pianificare il menu settimanale (pranzo e cena, giorno per
@@ -94,7 +93,3 @@ Idee lasciate volutamente fuori da questa prima bozza, per non appesantirla:
   piatto già fatto.
 - Notifiche push quando l'altra persona modifica qualcosa.
 - Riordinare gli elementi della lista della spesa per corsia del supermercato.
-=======
-# WeeklyMenu
-Weekly menu webapp including shopping list 
->>>>>>> 10188f6f478e3d9499fa48c72c8cde90f16cefd0

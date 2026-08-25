@@ -5,8 +5,10 @@ import MenuTab from "./components/MenuTab";
 import ShoppingTab from "./components/ShoppingTab";
 import { mondayOf, addWeeks, weekId } from "./lib/dates";
 import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
+import { useLanguage } from "./lib/LanguageContext";
 
 export default function App() {
+  const { lang, toggleLang, t } = useLanguage();
   const [unlocked, setUnlocked] = useState(isUnlocked());
   const [monday, setMonday] = useState(() => mondayOf(new Date()));
   const [tab, setTab] = useState("menu");
@@ -110,11 +112,8 @@ export default function App() {
   if (!isSupabaseConfigured) {
     return (
       <div className="setup-notice">
-        <h1>Configurazione mancante</h1>
-        <p>
-          Manca la connessione a Supabase. Copia <code>.env.example</code> in <code>.env</code> e
-          inserisci <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code> (vedi README).
-        </p>
+        <h1>{t("setupTitle")}</h1>
+        <p>{t("setupBody")}</p>
       </div>
     );
   }
@@ -122,7 +121,16 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <h1 className="app__title">Cosa mangiamo?</h1>
+        <div className="app__header-row">
+          <h1 className="app__title">{t("appTitle")}</h1>
+          <button
+            className="app__lang-toggle"
+            onClick={toggleLang}
+            aria-label={t("toggleLanguageAria")}
+          >
+            {lang === "it" ? "EN" : "IT"}
+          </button>
+        </div>
         <WeekNav
           monday={monday}
           onPrev={() => setMonday(addWeeks(monday, -1))}
@@ -133,7 +141,7 @@ export default function App() {
 
       <main className="app__main">
         {loading ? (
-          <p className="app__loading">Carico la settimana…</p>
+          <p className="app__loading">{t("loading")}</p>
         ) : tab === "menu" ? (
           <MenuTab monday={monday} menu={menu} onSave={saveMeal} />
         ) : (
@@ -153,14 +161,14 @@ export default function App() {
           onClick={() => setTab("menu")}
         >
           <span className="app__nav-icon" aria-hidden="true">📋</span>
-          Menu
+          {t("navMenu")}
         </button>
         <button
           className={`app__nav-item${tab === "spesa" ? " app__nav-item--active" : ""}`}
           onClick={() => setTab("spesa")}
         >
           <span className="app__nav-icon" aria-hidden="true">🛒</span>
-          Spesa
+          {t("navSpesa")}
         </button>
       </nav>
     </div>

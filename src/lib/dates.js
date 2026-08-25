@@ -1,17 +1,9 @@
-export const DAYS = [
-  { key: "lun", label: "Lunedì" },
-  { key: "mar", label: "Martedì" },
-  { key: "mer", label: "Mercoledì" },
-  { key: "gio", label: "Giovedì" },
-  { key: "ven", label: "Venerdì" },
-  { key: "sab", label: "Sabato" },
-  { key: "dom", label: "Domenica" },
-];
+import { MONTH_LABELS } from "./i18n";
 
-const MONTHS_IT = [
-  "gen", "feb", "mar", "apr", "mag", "giu",
-  "lug", "ago", "set", "ott", "nov", "dic",
-];
+// Internal keys used both for display order and as the JSON keys stored in
+// Supabase (weeks.menu). Keep these stable even if you add more languages -
+// changing them would orphan any week already saved.
+export const DAY_KEYS = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"];
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -44,17 +36,17 @@ export function dateForDayIndex(mondayDate, index) {
   return d;
 }
 
-export function shortDayDate(date) {
-  return `${date.getDate()} ${MONTHS_IT[date.getMonth()]}`;
+export function shortDayDate(date, lang = "it") {
+  const months = MONTH_LABELS[lang] ?? MONTH_LABELS.it;
+  return `${date.getDate()} ${months[date.getMonth()]}`;
 }
 
-export function weekRangeLabel(mondayDate) {
+export function weekRangeLabel(mondayDate, lang = "it") {
+  const months = MONTH_LABELS[lang] ?? MONTH_LABELS.it;
   const sunday = dateForDayIndex(mondayDate, 6);
   const sameMonth = mondayDate.getMonth() === sunday.getMonth();
-  const start = sameMonth
-    ? `${mondayDate.getDate()}`
-    : `${mondayDate.getDate()} ${MONTHS_IT[mondayDate.getMonth()]}`;
-  const end = `${sunday.getDate()} ${MONTHS_IT[sunday.getMonth()]}`;
+  const start = sameMonth ? `${mondayDate.getDate()}` : `${mondayDate.getDate()} ${months[mondayDate.getMonth()]}`;
+  const end = `${sunday.getDate()} ${months[sunday.getMonth()]}`;
   return `${start}\u2013${end}`;
 }
 
