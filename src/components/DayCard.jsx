@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { shortDayDate } from "../lib/dates";
+import { useLanguage } from "../lib/LanguageContext";
 
-const MEALS = [
-  { key: "pranzo", label: "Pranzo" },
-  { key: "cena", label: "Cena" },
-];
-
-export default function DayCard({ day, date, value, onSave }) {
+export default function DayCard({ dayKey, label, date, value, onSave }) {
+  const { lang, t } = useLanguage();
   const [local, setLocal] = useState(value ?? {});
   const timers = useRef({});
   const isToday = new Date().toDateString() === date.toDateString();
 
-  // Pick up remote changes (from Natalia's device) unless we're mid-edit on that field.
+  const MEALS = [
+    { key: "pranzo", label: t("mealLunch") },
+    { key: "cena", label: t("mealDinner") },
+  ];
+
+  // Pick up remote changes (from the other person's device).
   useEffect(() => {
     setLocal((prev) => ({ ...prev, ...value }));
   }, [value]);
@@ -20,15 +22,16 @@ export default function DayCard({ day, date, value, onSave }) {
     setLocal((prev) => ({ ...prev, [mealKey]: text }));
     clearTimeout(timers.current[mealKey]);
     timers.current[mealKey] = setTimeout(() => {
-      onSave(day.key, mealKey, text);
+      onSave(dayKey, mealKey, text);
     }, 500);
   }
 
   return (
     <div className={`day-card${isToday ? " day-card--today" : ""}`}>
+      {isToday && <span className="day-card__today-badge">{t("todayBadge")}</span>}
       <div className="day-card__header">
-        <h2 className="day-card__name">{day.label}</h2>
-        <span className="day-card__date">{shortDayDate(date)}</span>
+        <h2 className="day-card__name">{label}</h2>
+        <span className="day-card__date">{shortDayDate(date, lang)}</span>
       </div>
       <div className="day-card__meals">
         {MEALS.map((meal) => (
@@ -37,7 +40,7 @@ export default function DayCard({ day, date, value, onSave }) {
             <textarea
               className="day-card__meal-input"
               rows={1}
-              placeholder="cosa mangiate?"
+              placeholder={t("mealPlaceholder")}
               value={local[meal.key] ?? ""}
               onChange={(e) => handleChange(meal.key, e.target.value)}
             />
