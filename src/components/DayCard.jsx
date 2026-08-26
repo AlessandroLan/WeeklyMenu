@@ -40,7 +40,6 @@ export default function DayCard({ dayKey, label, date, value, onSave }) {
             <textarea
               className="day-card__meal-input"
               rows={1}
-              placeholder={t("mealPlaceholder")}
               value={local[meal.key] ?? ""}
               onChange={(e) => handleChange(meal.key, e.target.value)}
             />
