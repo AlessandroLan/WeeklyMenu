@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { StickyNote } from "lucide-react";
 import { shortDayDate } from "../lib/dates";
 import { useLanguage } from "../lib/LanguageContext";
 
@@ -18,11 +19,11 @@ export default function DayCard({ dayKey, label, date, value, onSave }) {
     setLocal((prev) => ({ ...prev, ...value }));
   }, [value]);
 
-  function handleChange(mealKey, text) {
-    setLocal((prev) => ({ ...prev, [mealKey]: text }));
-    clearTimeout(timers.current[mealKey]);
-    timers.current[mealKey] = setTimeout(() => {
-      onSave(dayKey, mealKey, text);
+  function handleChange(fieldKey, text) {
+    setLocal((prev) => ({ ...prev, [fieldKey]: text }));
+    clearTimeout(timers.current[fieldKey]);
+    timers.current[fieldKey] = setTimeout(() => {
+      onSave(dayKey, fieldKey, text);
     }, 500);
   }
 
@@ -48,6 +49,16 @@ export default function DayCard({ dayKey, label, date, value, onSave }) {
           </label>
         ))}
       </div>
+      <label className="day-card__note">
+        <StickyNote size={14} strokeWidth={2.2} className="day-card__note-icon" aria-hidden="true" />
+        <input
+          type="text"
+          className="day-card__note-input"
+          value={local.note ?? ""}
+          onChange={(e) => handleChange("note", e.target.value)}
+          aria-label={t("dayNoteLabel")}
+        />
+      </label>
     </div>
   );
 }

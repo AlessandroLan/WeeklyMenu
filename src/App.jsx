@@ -81,6 +81,32 @@ export default function App() {
     await supabase.from("weeks").upsert({ id, menu: nextMenu });
   }
 
+  async function duplicateLastWeek() {
+    const hasContent = Object.values(menu).some(
+      (day) => day && (day.pranzo || day.cena || day.note)
+    );
+    if (hasContent && !window.confirm(t("duplicateWeekConfirm"))) return;
+
+    const prevId = weekId(addWeeks(monday, -1));
+    const { data: prevWeek } = await supabase
+      .from("weeks")
+      .select("menu")
+      .eq("id", prevId)
+      .maybeSingle();
+
+    const prevMenu = prevWeek?.menu ?? {};
+    const hasPrevContent = Object.values(prevMenu).some(
+      (day) => day && (day.pranzo || day.cena || day.note)
+    );
+    if (!hasPrevContent) {
+      window.alert(t("duplicateWeekEmpty"));
+      return;
+    }
+
+    setMenu(prevMenu);
+    await supabase.from("weeks").upsert({ id, menu: prevMenu });
+  }
+
   async function addItem(text) {
     const { data } = await supabase
       .from("shopping_items")
@@ -145,7 +171,7 @@ export default function App() {
         {loading ? (
           <p className="app__loading">{t("loading")}</p>
         ) : tab === "menu" ? (
-          <MenuTab monday={monday} menu={menu} onSave={saveMeal} />
+          <MenuTab monday={monday} menu={menu} onSave={saveMeal} onDuplicate={duplicateLastWeek} />
         ) : (
           <ShoppingTab
             items={items}
