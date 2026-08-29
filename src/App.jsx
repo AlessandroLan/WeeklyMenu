@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, Languages, ShoppingCart } from "lucide-react";
 import PinGate, { isUnlocked } from "./components/PinGate";
 import WeekNav from "./components/WeekNav";
 import MenuTab from "./components/MenuTab";
@@ -128,6 +129,7 @@ export default function App() {
             onClick={toggleLang}
             aria-label={t("toggleLanguageAria")}
           >
+            <Languages size={14} strokeWidth={2.2} />
             {lang === "it" ? "EN" : "IT"}
           </button>
         </div>
@@ -156,20 +158,22 @@ export default function App() {
       </main>
 
       <nav className="app__nav">
-        <button
-          className={`app__nav-item${tab === "menu" ? " app__nav-item--active" : ""}`}
-          onClick={() => setTab("menu")}
-        >
-          <span className="app__nav-icon" aria-hidden="true">📋</span>
-          {t("navMenu")}
-        </button>
-        <button
-          className={`app__nav-item${tab === "spesa" ? " app__nav-item--active" : ""}`}
-          onClick={() => setTab("spesa")}
-        >
-          <span className="app__nav-icon" aria-hidden="true">🛒</span>
-          {t("navSpesa")}
-        </button>
+        <div className="app__nav-inner">
+          <button
+            className={`app__nav-item${tab === "menu" ? " app__nav-item--active" : ""}`}
+            onClick={() => setTab("menu")}
+          >
+            <CalendarDays size={17} strokeWidth={2.2} />
+            {t("navMenu")}
+          </button>
+          <button
+            className={`app__nav-item${tab === "spesa" ? " app__nav-item--active" : ""}`}
+            onClick={() => setTab("spesa")}
+          >
+            <ShoppingCart size={17} strokeWidth={2.2} />
+            {t("navSpesa")}
+          </button>
+        </div>
       </nav>
     </div>
   );
