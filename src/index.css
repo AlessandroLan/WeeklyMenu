@@ -210,6 +210,26 @@
   gap: 12px;
 }
 
+.menu-tab__duplicate {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: var(--teal-tint);
+  color: var(--teal-dark);
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+
+.menu-tab__duplicate:active {
+  transform: scale(0.97);
+}
+
 .day-card {
   background: var(--surface);
   border-radius: var(--radius);
@@ -323,6 +343,62 @@
 
 .day-card--today .day-card__meal-input::placeholder {
   color: rgba(255, 255, 255, 0.5);
+}
+
+.day-card__note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.day-card__note-icon {
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+
+.day-card--today .day-card__note-icon {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.day-card__note-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-style: italic;
+  color: var(--ink-soft);
+  padding: 2px 0;
+}
+
+.day-card__note-input:focus {
+  outline: none;
+  color: var(--ink);
+}
+
+.day-card__note-input::placeholder {
+  color: var(--ink-faint);
+  opacity: 0.85;
+}
+
+.day-card--today .day-card__note-input {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.day-card--today .day-card__note-input:focus {
+  color: #fff;
+}
+
+.day-card--today .day-card__note-input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.day-card--today .day-card__note {
+  border-top-color: rgba(255, 255, 255, 0.25);
 }
 
 /* ---------- Shopping list ---------- */
