@@ -28,9 +28,11 @@ export default function DayCard({ dayKey, label, date, value, onSave }) {
 
   return (
     <div className={`day-card${isToday ? " day-card--today" : ""}`}>
-      {isToday && <span className="day-card__today-badge">{t("todayBadge")}</span>}
       <div className="day-card__header">
-        <h2 className="day-card__name">{label}</h2>
+        <div>
+          {isToday && <span className="day-card__eyebrow">{t("todayBadge")}</span>}
+          <h2 className="day-card__name">{label}</h2>
+        </div>
         <span className="day-card__date">{shortDayDate(date, lang)}</span>
       </div>
       <div className="day-card__meals">

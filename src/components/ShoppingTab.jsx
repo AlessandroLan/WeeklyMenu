@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Check, Plus, X } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 
 export default function ShoppingTab({ items, onAdd, onToggle, onDelete, onClearChecked }) {
@@ -28,7 +29,7 @@ export default function ShoppingTab({ items, onAdd, onToggle, onDelete, onClearC
                 aria-label={t(item.checked ? "shoppingCheckOff" : "shoppingCheckOn", { item: item.text })}
                 onClick={() => onToggle(item.id, !item.checked)}
               >
-                {item.checked ? "✓" : ""}
+                {item.checked && <Check size={15} strokeWidth={3} />}
               </button>
               <span className="shopping-item__text">{item.text}</span>
               <button
@@ -36,7 +37,7 @@ export default function ShoppingTab({ items, onAdd, onToggle, onDelete, onClearC
                 aria-label={t("shoppingDeleteAria", { item: item.text })}
                 onClick={() => onDelete(item.id)}
               >
-                ×
+                <X size={17} strokeWidth={2.2} />
               </button>
             </li>
           ))}
@@ -58,7 +59,7 @@ export default function ShoppingTab({ items, onAdd, onToggle, onDelete, onClearC
           placeholder={t("shoppingAddPlaceholder")}
         />
         <button className="shopping-add__button" type="submit" aria-label={t("shoppingAddAria")}>
-          +
+          <Plus size={22} strokeWidth={2.4} />
         </button>
       </form>
     </div>

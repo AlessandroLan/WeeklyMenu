@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect x="8" y="6" width="48" height="54" rx="4" fill="#FBF3DD" stroke="#2F4F3E" stroke-width="3"/>
-  <line x1="16" y1="20" x2="48" y2="20" stroke="#2F4F3E" stroke-width="3" stroke-linecap="round"/>
-  <line x1="16" y1="30" x2="48" y2="30" stroke="#2F4F3E" stroke-width="3" stroke-linecap="round"/>
-  <line x1="16" y1="40" x2="36" y2="40" stroke="#2F4F3E" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="46" cy="46" r="13" fill="#C1502E"/>
-  <path d="M40 46 l4 4 l8 -9" fill="none" stroke="#FBF3DD" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="8" y="6" width="48" height="54" rx="10" fill="#FFFFFF" stroke="#1F6F63" stroke-width="3"/>
+  <line x1="16" y1="20" x2="48" y2="20" stroke="#1F6F63" stroke-width="3" stroke-linecap="round"/>
+  <line x1="16" y1="30" x2="48" y2="30" stroke="#1F6F63" stroke-width="3" stroke-linecap="round"/>
+  <line x1="16" y1="40" x2="36" y2="40" stroke="#1F6F63" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="46" cy="46" r="13" fill="#F2A93B"/>
+  <path d="M40 46 l4 4 l8 -9" fill="none" stroke="#16211D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

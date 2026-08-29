@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 
 const STORAGE_KEY = "menu-app-unlocked";
@@ -26,7 +27,9 @@ export default function PinGate({ onUnlock }) {
   return (
     <div className="pin-gate">
       <form className="pin-card" onSubmit={handleSubmit}>
-        <span className="pin-card__tab" aria-hidden="true" />
+        <div className="pin-card__icon">
+          <Lock size={22} strokeWidth={2.2} />
+        </div>
         <h1 className="pin-card__title">{t("pinTitle")}</h1>
         <p className="pin-card__hint">{t("pinHint")}</p>
         <input
