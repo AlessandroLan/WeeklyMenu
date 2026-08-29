@@ -63,8 +63,10 @@ versione.
 
 ## 4. Uso quotidiano
 
-- Salvate il link della pagina sulla home del telefono (Safari/Chrome ->
-  "Aggiungi a Home") per aprirla come una vera app.
+- L'app ora ha un'icona e un manifest propri: su iPhone (Safari) toccate
+  Condividi -> "Aggiungi alla schermata Home"; su Android (Chrome) toccate il
+  menu (⋮) -> "Installa app" o "Aggiungi a schermata Home". Si aprirà a schermo
+  intero, con la propria icona, senza barra degli indirizzi del browser.
 - La prima volta vi chiederà il PIN concordato; da lì in poi resta salvato sul
   telefono.
 - Le frecce in alto permettono di spostarsi tra le settimane; "torna a oggi"
