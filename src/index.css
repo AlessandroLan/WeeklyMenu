@@ -14,7 +14,7 @@
   position: sticky;
   top: 0;
   z-index: 5;
-  padding: 16px var(--gutter) 14px;
+  padding: calc(16px + env(safe-area-inset-top)) var(--gutter) 14px;
   background: var(--surface);
   box-shadow: 0 1px 0 var(--line), 0 8px 20px -14px var(--shadow);
 }
