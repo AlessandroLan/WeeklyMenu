@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Languages, RefreshCw, ShoppingCart } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CalendarDays, Languages, RefreshCw, Share2, ShoppingCart } from "lucide-react";
 import PinGate, { isUnlocked } from "./components/PinGate";
 import PullToRefresh from "./components/PullToRefresh";
 import WeekNav from "./components/WeekNav";
@@ -8,6 +8,7 @@ import ShoppingTab from "./components/ShoppingTab";
 import { mondayOf, addWeeks, weekId } from "./lib/dates";
 import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 import { useLanguage } from "./lib/LanguageContext";
+import { formatWeekAsText, weekHasContent } from "./lib/shareWeek";
 
 export default function App() {
   const { lang, toggleLang, t } = useLanguage();
@@ -17,6 +18,8 @@ export default function App() {
   const [menu, setMenu] = useState({});
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null);
+  const lastLoadedAt = useRef(0);
 
   const id = useMemo(() => weekId(monday), [monday]);
 
@@ -43,6 +46,7 @@ export default function App() {
 
     setMenu(week?.menu ?? {});
     setItems(shoppingItems ?? []);
+    lastLoadedAt.current = Date.now();
   }, [id]);
 
   useEffect(() => {
@@ -61,6 +65,61 @@ export default function App() {
 
   async function handleRefresh() {
     await loadWeek();
+  }
+
+  // Re-fetch when the app comes back to the foreground (tab focus, or reopening
+  // the installed PWA). Replaces the realtime subscription for the common case
+  // of "the other person edited it while my phone was in my pocket".
+  useEffect(() => {
+    if (!unlocked || !isSupabaseConfigured) return;
+
+    function maybeRefresh() {
+      if (document.visibilityState !== "visible") return;
+      // Don't yank text out from under someone mid-edit.
+      const el = document.activeElement;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
+      // A quick app-switch shouldn't cause a burst of identical queries.
+      if (Date.now() - lastLoadedAt.current < 10000) return;
+      loadWeek();
+    }
+
+    document.addEventListener("visibilitychange", maybeRefresh);
+    window.addEventListener("focus", maybeRefresh);
+    return () => {
+      document.removeEventListener("visibilitychange", maybeRefresh);
+      window.removeEventListener("focus", maybeRefresh);
+    };
+  }, [loadWeek, unlocked]);
+
+  function showToast(message) {
+    setToast(message);
+    setTimeout(() => setToast(null), 2600);
+  }
+
+  async function handleShare() {
+    if (!weekHasContent({ menu, items })) {
+      showToast(t("shareNothing"));
+      return;
+    }
+    const text = formatWeekAsText({ monday, menu, items, lang });
+
+    // navigator.share is the good path on phones (opens WhatsApp, Messages, ...).
+    // Everywhere else, fall back to the clipboard.
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch (err) {
+        // The user dismissing the share sheet lands here too - stay quiet then.
+        if (err?.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast(t("shareCopied"));
+    } catch {
+      showToast(t("shareNothing"));
+    }
   }
 
 
@@ -147,6 +206,14 @@ export default function App() {
           <div className="app__header-actions">
             <button
               className="app__icon-button"
+              onClick={handleShare}
+              aria-label={t("shareAria")}
+              title={t("shareAria")}
+            >
+              <Share2 size={15} strokeWidth={2.2} />
+            </button>
+            <button
+              className="app__icon-button"
               onClick={handleRefresh}
               aria-label={t("refreshAria")}
               title={t("refreshAria")}
@@ -208,6 +275,8 @@ export default function App() {
           </button>
         </div>
       </nav>
+
+      {toast && <div className="app__toast" role="status">{toast}</div>}
     </div>
   );
 }
