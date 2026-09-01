@@ -538,8 +538,32 @@
 
 .shopping-item__text {
   flex: 1;
+  min-width: 0;
   font-size: 15px;
+  font-family: var(--font-body);
+  text-align: left;
   word-break: break-word;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  padding: 2px 0;
+  cursor: text;
+}
+
+.shopping-item__input {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--teal);
+  padding: 2px 0;
+}
+
+.shopping-item__input:focus {
+  outline: none;
 }
 
 .shopping-item--checked .shopping-item__text {
@@ -629,12 +653,37 @@
 /* ---------- PIN gate ---------- */
 
 .pin-gate {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
   background: var(--bg);
+}
+
+.pin-gate__lang {
+  position: absolute;
+  top: calc(18px + env(safe-area-inset-top));
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: var(--teal-tint);
+  color: var(--teal-dark);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.pin-gate__lang:active {
+  transform: scale(0.94);
 }
 
 .pin-card {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock } from "lucide-react";
+import { Languages, Lock } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 
 const STORAGE_KEY = "menu-app-unlocked";
@@ -9,7 +9,7 @@ export function isUnlocked() {
 }
 
 export default function PinGate({ onUnlock }) {
-  const { t } = useLanguage();
+  const { lang, toggleLang, t } = useLanguage();
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const expectedPin = import.meta.env.VITE_APP_PIN;
@@ -26,6 +26,16 @@ export default function PinGate({ onUnlock }) {
 
   return (
     <div className="pin-gate">
+      <button
+        className="pin-gate__lang"
+        type="button"
+        onClick={toggleLang}
+        aria-label={t("toggleLanguageAria")}
+      >
+        <Languages size={14} strokeWidth={2.2} />
+        {lang === "it" ? "EN" : "IT"}
+      </button>
+
       <form className="pin-card" onSubmit={handleSubmit}>
         <div className="pin-card__icon">
           <Lock size={22} strokeWidth={2.2} />

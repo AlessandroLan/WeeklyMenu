@@ -110,6 +110,11 @@ export default function App() {
     await supabase.from("shopping_items").update({ checked }).eq("id", itemId);
   }
 
+  async function editItem(itemId, text) {
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, text } : it)));
+    await supabase.from("shopping_items").update({ text }).eq("id", itemId);
+  }
+
   async function deleteItem(itemId) {
     setItems((prev) => prev.filter((it) => it.id !== itemId));
     await supabase.from("shopping_items").delete().eq("id", itemId);
@@ -178,6 +183,7 @@ export default function App() {
             onAdd={addItem}
             onToggle={toggleItem}
             onDelete={deleteItem}
+            onEdit={editItem}
             onClearChecked={clearChecked}
           />
         )}
