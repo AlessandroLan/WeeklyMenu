@@ -68,10 +68,9 @@
 }
 
 .ptr__indicator {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  /* Deliberately in normal flow rather than absolute + a transform on the
+     content: a transformed ancestor becomes the containing block for
+     position: fixed children, which would break the floating add bar. */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -103,9 +102,6 @@
   letter-spacing: 0.01em;
 }
 
-.ptr__content {
-  will-change: transform;
-}
 
 .app__lang-toggle {
   flex-shrink: 0;

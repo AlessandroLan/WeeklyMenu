@@ -102,7 +102,12 @@ export default function PullToRefresh({ onRefresh, children }) {
     <div className="ptr" ref={containerRef}>
       <div
         className="ptr__indicator"
-        style={{ height: pull, opacity: pull > 6 ? 1 : 0 }}
+        style={{
+          height: pull,
+          opacity: pull > 6 ? 1 : 0,
+          // Snap back smoothly on release, but track the finger 1:1 while dragging.
+          transition: dragging ? "opacity 0.15s ease" : "height 0.25s ease, opacity 0.15s ease",
+        }}
         aria-hidden={pull === 0}
       >
         <RefreshCw
@@ -113,15 +118,7 @@ export default function PullToRefresh({ onRefresh, children }) {
         />
         <span className="ptr__label">{label}</span>
       </div>
-      <div
-        className="ptr__content"
-        style={{
-          transform: `translateY(${pull}px)`,
-          transition: dragging ? "none" : "transform 0.25s ease",
-        }}
-      >
-        {children}
-      </div>
+      <div className="ptr__content">{children}</div>
     </div>
   );
 }
