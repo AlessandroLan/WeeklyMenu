@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Languages, ShoppingCart } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarDays, Languages, RefreshCw, ShoppingCart } from "lucide-react";
 import PinGate, { isUnlocked } from "./components/PinGate";
+import PullToRefresh from "./components/PullToRefresh";
 import WeekNav from "./components/WeekNav";
 import MenuTab from "./components/MenuTab";
 import ShoppingTab from "./components/ShoppingTab";
@@ -19,61 +20,49 @@ export default function App() {
 
   const id = useMemo(() => weekId(monday), [monday]);
 
+  // Fetches the week + its shopping list. Extracted from the effect so that the
+  // pull-to-refresh gesture and the header button can re-run exactly the same
+  // load on demand.
+  const loadWeek = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+
+    let { data: week } = await supabase.from("weeks").select("*").eq("id", id).maybeSingle();
+    if (!week) {
+      const { data: created } = await supabase
+        .from("weeks")
+        .insert({ id, menu: {} })
+        .select()
+        .single();
+      week = created;
+    }
+    const { data: shoppingItems } = await supabase
+      .from("shopping_items")
+      .select("*")
+      .eq("week_id", id)
+      .order("created_at", { ascending: true });
+
+    setMenu(week?.menu ?? {});
+    setItems(shoppingItems ?? []);
+  }, [id]);
+
   useEffect(() => {
     if (!unlocked || !isSupabaseConfigured) return;
     let cancelled = false;
     setLoading(true);
 
-    async function load() {
-      let { data: week } = await supabase.from("weeks").select("*").eq("id", id).maybeSingle();
-      if (!week) {
-        const { data: created } = await supabase
-          .from("weeks")
-          .insert({ id, menu: {} })
-          .select()
-          .single();
-        week = created;
-      }
-      const { data: shoppingItems } = await supabase
-        .from("shopping_items")
-        .select("*")
-        .eq("week_id", id)
-        .order("created_at", { ascending: true });
-
-      if (!cancelled) {
-        setMenu(week?.menu ?? {});
-        setItems(shoppingItems ?? []);
-        setLoading(false);
-      }
-    }
-    load();
-
-    const channel = supabase
-      .channel(`week-${id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "weeks", filter: `id=eq.${id}` },
-        (payload) => setMenu(payload.new.menu ?? {})
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "shopping_items", filter: `week_id=eq.${id}` },
-        () => {
-          supabase
-            .from("shopping_items")
-            .select("*")
-            .eq("week_id", id)
-            .order("created_at", { ascending: true })
-            .then(({ data }) => setItems(data ?? []));
-        }
-      )
-      .subscribe();
+    loadWeek().finally(() => {
+      if (!cancelled) setLoading(false);
+    });
 
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
     };
-  }, [id, unlocked]);
+  }, [loadWeek, unlocked]);
+
+  async function handleRefresh() {
+    await loadWeek();
+  }
+
 
   async function saveMeal(dayKey, mealKey, text) {
     const nextMenu = { ...menu, [dayKey]: { ...menu[dayKey], [mealKey]: text } };
@@ -150,14 +139,24 @@ export default function App() {
       <header className="app__header">
         <div className="app__header-row">
           <h1 className="app__title">{t("appTitle")}</h1>
-          <button
-            className="app__lang-toggle"
-            onClick={toggleLang}
-            aria-label={t("toggleLanguageAria")}
-          >
-            <Languages size={14} strokeWidth={2.2} />
-            {lang === "it" ? "EN" : "IT"}
-          </button>
+          <div className="app__header-actions">
+            <button
+              className="app__icon-button"
+              onClick={handleRefresh}
+              aria-label={t("refreshAria")}
+              title={t("refreshAria")}
+            >
+              <RefreshCw size={15} strokeWidth={2.2} />
+            </button>
+            <button
+              className="app__lang-toggle"
+              onClick={toggleLang}
+              aria-label={t("toggleLanguageAria")}
+            >
+              <Languages size={14} strokeWidth={2.2} />
+              {lang === "it" ? "EN" : "IT"}
+            </button>
+          </div>
         </div>
         <WeekNav
           monday={monday}
@@ -167,6 +166,7 @@ export default function App() {
         />
       </header>
 
+      <PullToRefresh onRefresh={handleRefresh}>
       <main className="app__main">
         {loading ? (
           <p className="app__loading">{t("loading")}</p>
@@ -182,6 +182,7 @@ export default function App() {
           />
         )}
       </main>
+      </PullToRefresh>
 
       <nav className="app__nav">
         <div className="app__nav-inner">

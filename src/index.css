@@ -36,6 +36,77 @@
   letter-spacing: -0.01em;
 }
 
+.app__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.app__icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--teal-tint);
+  color: var(--teal-dark);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.app__icon-button:active {
+  transform: scale(0.92) rotate(-45deg);
+}
+
+/* ---------- Pull to refresh ---------- */
+
+.ptr {
+  position: relative;
+}
+
+.ptr__indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  overflow: hidden;
+  color: var(--teal-dark);
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.ptr__icon {
+  transition: transform 0.1s linear;
+}
+
+.ptr__icon--spinning {
+  animation: ptr-spin 0.8s linear infinite;
+}
+
+@keyframes ptr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ptr__label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.ptr__content {
+  will-change: transform;
+}
+
 .app__lang-toggle {
   flex-shrink: 0;
   display: flex;
