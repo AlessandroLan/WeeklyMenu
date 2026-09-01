@@ -478,6 +478,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* The add bar is position: fixed and floats above this list, so the list
+     needs its own clearance on top of the bottom-nav padding in .app__main -
+     otherwise the last few items sit underneath it. */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 58px);
 }
 
 .shopping-list {
