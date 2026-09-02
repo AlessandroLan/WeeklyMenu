@@ -1,5 +1,6 @@
 import { DAY_KEYS, dateForDayIndex, shortDayDate, weekRangeLabel } from "./dates";
 import { DAY_LABELS, STRINGS } from "./i18n";
+import { formatQuantity } from "./quantity";
 
 // Formats a week into the kind of plain-text message that used to get pasted
 // into WhatsApp, so it can be shared or copied straight out of the app.
@@ -29,7 +30,10 @@ export function formatWeekAsText({ monday, menu, items, lang }) {
   if (pending.length > 0) {
     lines.push("");
     lines.push(`${s.shareShoppingHeading}`);
-    pending.forEach((i) => lines.push(`- ${i.text}`));
+    pending.forEach((i) => {
+      const qty = formatQuantity(i.amount, i.unit);
+      lines.push(qty ? `- ${i.text} ${qty}` : `- ${i.text}`);
+    });
   }
 
   return lines.join("\n");
