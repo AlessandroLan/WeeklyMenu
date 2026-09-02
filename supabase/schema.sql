@@ -13,8 +13,16 @@ create table if not exists shopping_items (
   week_id text not null references weeks(id) on delete cascade,
   text text not null,
   checked boolean not null default false,
+  amount numeric,
+  unit text,
   created_at timestamptz not null default now()
 );
+
+-- If the table already existed before quantities were added, this backfills
+-- the two new columns. Safe to re-run: existing rows keep amount/unit null and
+-- simply show no quantity in the app.
+alter table shopping_items add column if not exists amount numeric;
+alter table shopping_items add column if not exists unit text;
 
 create index if not exists shopping_items_week_id_idx on shopping_items(week_id);
 

@@ -9,6 +9,7 @@ import { mondayOf, addWeeks, weekId } from "./lib/dates";
 import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 import { useLanguage } from "./lib/LanguageContext";
 import { formatWeekAsText, weekHasContent } from "./lib/shareWeek";
+import { parseItemText } from "./lib/quantity";
 
 export default function App() {
   const { lang, toggleLang, t } = useLanguage();
@@ -155,10 +156,12 @@ export default function App() {
     await supabase.from("weeks").upsert({ id, menu: prevMenu });
   }
 
-  async function addItem(text) {
+  async function addItem(rawText) {
+    const { text, amount, unit } = parseItemText(rawText);
+    if (!text) return;
     const { data } = await supabase
       .from("shopping_items")
-      .insert({ week_id: id, text, checked: false })
+      .insert({ week_id: id, text, amount, unit, checked: false })
       .select()
       .single();
     if (data) setItems((prev) => [...prev, data]);
@@ -169,9 +172,11 @@ export default function App() {
     await supabase.from("shopping_items").update({ checked }).eq("id", itemId);
   }
 
-  async function editItem(itemId, text) {
-    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, text } : it)));
-    await supabase.from("shopping_items").update({ text }).eq("id", itemId);
+  async function editItem(itemId, rawText) {
+    const { text, amount, unit } = parseItemText(rawText);
+    if (!text) return;
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, text, amount, unit } : it)));
+    await supabase.from("shopping_items").update({ text, amount, unit }).eq("id", itemId);
   }
 
   async function deleteItem(itemId) {

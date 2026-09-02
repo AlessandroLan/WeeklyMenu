@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Plus, X } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
+import { formatQuantity, itemToRawText } from "../lib/quantity";
 
 function ShoppingItem({ item, onToggle, onDelete, onEdit }) {
   const { t } = useLanguage();
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(item.text);
+  const [draft, setDraft] = useState(() => itemToRawText(item));
   const inputRef = useRef(null);
+  const quantity = formatQuantity(item.amount, item.unit);
 
   useEffect(() => {
     if (editing) inputRef.current?.focus();
@@ -15,7 +17,7 @@ function ShoppingItem({ item, onToggle, onDelete, onEdit }) {
   // Seed the draft from the item at the moment editing starts, so a value
   // refreshed from the server in the meantime is picked up.
   function startEditing() {
-    setDraft(item.text);
+    setDraft(itemToRawText(item));
     setEditing(true);
   }
 
@@ -24,15 +26,15 @@ function ShoppingItem({ item, onToggle, onDelete, onEdit }) {
     setEditing(false);
     // Empty input is treated as "no change" rather than deleting the item -
     // deleting has its own explicit button.
-    if (!trimmed || trimmed === item.text) {
-      setDraft(item.text);
+    if (!trimmed || trimmed === itemToRawText(item)) {
+      setDraft(itemToRawText(item));
       return;
     }
     onEdit(item.id, trimmed);
   }
 
   function cancel() {
-    setDraft(item.text);
+    setDraft(itemToRawText(item));
     setEditing(false);
   }
 
@@ -76,6 +78,8 @@ function ShoppingItem({ item, onToggle, onDelete, onEdit }) {
           {item.text}
         </button>
       )}
+
+      {!editing && quantity && <span className="shopping-item__qty">{quantity}</span>}
 
       <button
         className="shopping-item__delete"
