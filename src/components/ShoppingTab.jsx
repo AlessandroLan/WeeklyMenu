@@ -1,11 +1,49 @@
-import { useEffect, useRef, useState } from "react";
-import { Check, Plus, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Check, LayoutList, Plus, X } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 import { formatQuantity, itemToRawText } from "../lib/quantity";
+import { AISLES, DEFAULT_ORDER, STORES, STORE_LABELS, aisleFor, groupByAisle } from "../lib/aisles";
+import { useFitAboveNav } from "../lib/useFitAboveNav";
 
-function ShoppingItem({ item, onToggle, onDelete, onEdit }) {
+// Small list of aisles to move an item to; the choice is remembered for the
+// item's name.
+function AislePicker({ current, onPick, onClose }) {
+  const { t } = useLanguage();
+  const ref = useRef(null);
+  const up = useFitAboveNav(ref);
+  return (
+    <>
+      <button
+        type="button"
+        className="idea-pop__backdrop"
+        aria-hidden="true"
+        tabIndex={-1}
+        onClick={onClose}
+      />
+      <ul ref={ref} className={`aisle-picker${up ? " aisle-picker--up" : ""}`} role="listbox">
+        {AISLES.map((aisle) => (
+          <li key={aisle}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={aisle === current}
+              className={`aisle-picker__option${aisle === current ? " aisle-picker__option--current" : ""}`}
+              onClick={() => onPick(aisle)}
+            >
+              {t(`aisle_${aisle}`)}
+              {aisle === current && <Check size={14} strokeWidth={2.6} />}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+function ShoppingItem({ item, aisle, onToggle, onDelete, onEdit, onMoveAisle }) {
   const { t } = useLanguage();
   const [editing, setEditing] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [draft, setDraft] = useState(() => itemToRawText(item));
   const inputRef = useRef(null);
   const quantity = formatQuantity(item.amount, item.unit);
@@ -81,6 +119,30 @@ function ShoppingItem({ item, onToggle, onDelete, onEdit }) {
 
       {!editing && quantity && <span className="shopping-item__qty">{quantity}</span>}
 
+      {!editing && (
+        <div className="shopping-item__aisle">
+          <button
+            className="shopping-item__delete"
+            aria-label={t("aisleChangeAria", { item: item.text })}
+            aria-expanded={picking}
+            title={t("aisleChangeAria", { item: item.text })}
+            onClick={() => setPicking((p) => !p)}
+          >
+            <LayoutList size={16} strokeWidth={2.2} />
+          </button>
+          {picking && (
+            <AislePicker
+              current={aisle}
+              onClose={() => setPicking(false)}
+              onPick={(next) => {
+                setPicking(false);
+                if (next !== aisle) onMoveAisle(item, next);
+              }}
+            />
+          )}
+        </div>
+      )}
+
       <button
         className="shopping-item__delete"
         aria-label={t("shoppingDeleteAria", { item: item.text })}
@@ -92,10 +154,88 @@ function ShoppingItem({ item, onToggle, onDelete, onEdit }) {
   );
 }
 
-export default function ShoppingTab({ items, onAdd, onToggle, onDelete, onEdit, onClearChecked }) {
+// Rearranging the aisles of one store. Saved for both phones on "Done".
+function AisleOrderPanel({ store, order, onSave, onClose }) {
+  const { t } = useLanguage();
+  const [draft, setDraft] = useState(() => [...order, ...AISLES.filter((a) => !order.includes(a))]);
+
+  function move(index, delta) {
+    setDraft((prev) => {
+      const next = [...prev];
+      const [aisle] = next.splice(index, 1);
+      next.splice(index + delta, 0, aisle);
+      return next;
+    });
+  }
+
+  return (
+    <div className="dish-import">
+      <div className="dish-import__header">
+        <h2 className="dish-import__title">{t("aisleOrderTitle", { store: STORE_LABELS[store] })}</h2>
+      </div>
+      <p className="dish-import__hint">{t("aisleOrderHint")}</p>
+      <ol className="shopping-list shopping-list__items aisle-order">
+        {draft.map((aisle, index) => (
+          <li key={aisle} className="shopping-item aisle-order__row">
+            <span className="aisle-order__pos">{index + 1}</span>
+            <span className="aisle-order__name">{t(`aisle_${aisle}`)}</span>
+            <button
+              className="shopping-item__delete"
+              disabled={index === 0}
+              aria-label={t("aisleOrderUp", { aisle: t(`aisle_${aisle}`) })}
+              onClick={() => move(index, -1)}
+            >
+              <ArrowUp size={16} strokeWidth={2.2} />
+            </button>
+            <button
+              className="shopping-item__delete"
+              disabled={index === draft.length - 1}
+              aria-label={t("aisleOrderDown", { aisle: t(`aisle_${aisle}`) })}
+              onClick={() => move(index, 1)}
+            >
+              <ArrowDown size={16} strokeWidth={2.2} />
+            </button>
+          </li>
+        ))}
+      </ol>
+      <div className="dish-import__actions">
+        <button className="dish-import__cancel" onClick={() => setDraft(DEFAULT_ORDER)}>
+          {t("aisleOrderReset")}
+        </button>
+        <button
+          className="dish-import__confirm"
+          onClick={async () => {
+            await onSave(store, draft);
+            onClose();
+          }}
+        >
+          {t("aisleOrderDone")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function ShoppingTab({
+  items,
+  learnedAisles,
+  storeOrders,
+  store,
+  onStoreChange,
+  onSaveOrder,
+  onMoveAisle,
+  onAdd,
+  onToggle,
+  onDelete,
+  onEdit,
+  onClearChecked,
+}) {
   const { t } = useLanguage();
   const [text, setText] = useState("");
+  const [ordering, setOrdering] = useState(false);
   const checkedCount = items.filter((i) => i.checked).length;
+  const order = storeOrders[store] ?? DEFAULT_ORDER;
+  const groups = useMemo(() => groupByAisle(items, learnedAisles, order), [items, learnedAisles, order]);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -105,21 +245,57 @@ export default function ShoppingTab({ items, onAdd, onToggle, onDelete, onEdit, 
     setText("");
   }
 
+  if (ordering) {
+    return (
+      <AisleOrderPanel store={store} order={order} onSave={onSaveOrder} onClose={() => setOrdering(false)} />
+    );
+  }
+
   return (
     <div className="shopping-tab">
+      <div className="shopping-tab__stores">
+        <div className="dishes-tab__sort" role="group" aria-label={t("storePickerAria")}>
+          {STORES.map((key) => (
+            <button
+              key={key}
+              className={`dishes-tab__chip${store === key ? " dishes-tab__chip--active" : ""}`}
+              aria-pressed={store === key}
+              onClick={() => onStoreChange(key)}
+            >
+              {STORE_LABELS[key]}
+            </button>
+          ))}
+        </div>
+        <button
+          className="app__icon-button"
+          onClick={() => setOrdering(true)}
+          aria-label={t("aisleOrderButton")}
+          title={t("aisleOrderButton")}
+        >
+          <ArrowUpDown size={15} strokeWidth={2.2} />
+        </button>
+      </div>
+
       <div className="shopping-list">
         {items.length === 0 && <p className="shopping-list__empty">{t("shoppingEmpty")}</p>}
-        <ul className="shopping-list__items">
-          {items.map((item) => (
-            <ShoppingItem
-              key={item.id}
-              item={item}
-              onToggle={onToggle}
-              onDelete={onDelete}
-              onEdit={onEdit}
-            />
-          ))}
-        </ul>
+        {groups.map(({ aisle, items: aisleItems }) => (
+          <section key={aisle} className="shopping-aisle">
+            <h3 className="shopping-aisle__name">{t(`aisle_${aisle}`)}</h3>
+            <ul className="shopping-list__items">
+              {aisleItems.map((item) => (
+                <ShoppingItem
+                  key={item.id}
+                  item={item}
+                  aisle={aisleFor(item.text, learnedAisles)}
+                  onToggle={onToggle}
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                  onMoveAisle={onMoveAisle}
+                />
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
 
       {checkedCount > 0 && (

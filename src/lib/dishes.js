@@ -33,13 +33,13 @@ function keyWords(normalized) {
 
 // How many typos a word of this length may contain and still count as the
 // same word. Short words must match exactly: "test" is not "pesto".
-function typoAllowance(length) {
+export function typoAllowance(length) {
   if (length >= 7) return 2;
   if (length >= 5) return 1;
   return 0;
 }
 
-function editDistance(a, b) {
+export function editDistance(a, b) {
   if (a === b) return 0;
   const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
   for (let i = 1; i <= a.length; i++) {

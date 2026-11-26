@@ -162,3 +162,53 @@ grant select, insert on recipe_ideas to anon;
 -- Some projects grant every privilege on new tables by default; take back the
 -- ones the app must not have.
 revoke update, delete, truncate, references, trigger on recipe_ideas from anon;
+
+-- ---------------------------------------------------------------------------
+-- Shopping list by supermarket aisle. Items are placed by a built-in word list
+-- (src/lib/aisles.js); these tables hold what the two of you change.
+
+-- "This item goes in this aisle", learned when an item is moved by hand.
+-- key = the item name lowercased without accents, e.g. 'rolada'.
+create table if not exists aisle_memory (
+  key text primary key,
+  aisle text not null,
+  updated_at timestamptz not null default now()
+);
+
+-- Order of the aisles in each store (lidl, kaufland, auchan).
+create table if not exists store_layouts (
+  store text primary key,
+  aisle_order text[] not null,
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists aisle_memory_set_updated_at on aisle_memory;
+create trigger aisle_memory_set_updated_at
+  before update on aisle_memory
+  for each row execute function set_updated_at();
+
+drop trigger if exists store_layouts_set_updated_at on store_layouts;
+create trigger store_layouts_set_updated_at
+  before update on store_layouts
+  for each row execute function set_updated_at();
+
+alter table aisle_memory enable row level security;
+alter table store_layouts enable row level security;
+
+-- Read, add and change; nothing is ever deleted.
+drop policy if exists "anon read aisle_memory" on aisle_memory;
+create policy "anon read aisle_memory" on aisle_memory for select to anon using (true);
+drop policy if exists "anon add aisle_memory" on aisle_memory;
+create policy "anon add aisle_memory" on aisle_memory for insert to anon with check (true);
+drop policy if exists "anon change aisle_memory" on aisle_memory;
+create policy "anon change aisle_memory" on aisle_memory for update to anon using (true) with check (true);
+
+drop policy if exists "anon read store_layouts" on store_layouts;
+create policy "anon read store_layouts" on store_layouts for select to anon using (true);
+drop policy if exists "anon add store_layouts" on store_layouts;
+create policy "anon add store_layouts" on store_layouts for insert to anon with check (true);
+drop policy if exists "anon change store_layouts" on store_layouts;
+create policy "anon change store_layouts" on store_layouts for update to anon using (true) with check (true);
+
+grant select, insert, update on aisle_memory, store_layouts to anon;
+revoke delete, truncate, references, trigger on aisle_memory, store_layouts from anon;
