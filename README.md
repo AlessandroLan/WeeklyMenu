@@ -73,6 +73,19 @@ versione.
   riporta rapidamente alla settimana corrente.
 - La lista della spesa è legata alla settimana che state guardando.
 
+## Idee da siti di ricette
+
+Ogni giorno il workflow [`.github/workflows/recipe-ideas.yml`](./.github/workflows/recipe-ideas.yml)
+legge il feed RSS pubblico di GialloZafferano e salva nella tabella
+`recipe_ideas` solo **titolo, link e data** delle nuove ricette (i dolci sono
+riconosciuti dal titolo e non vengono proposti come pranzo o cena). Testo e
+foto delle ricette non vengono copiati: toccando un'idea si apre la ricetta sul
+sito originale, nel rispetto delle condizioni d'uso del sito.
+
+Usa gli stessi secret `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` del deploy.
+Si può avviare a mano da **Actions -> Fetch recipe ideas -> Run workflow**, o in
+locale con `node --env-file=.env.development.local scripts/fetch-recipe-ideas.mjs`.
+
 ## Struttura del progetto
 
 ```
