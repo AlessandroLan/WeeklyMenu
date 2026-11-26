@@ -783,6 +783,14 @@
   color: var(--ink);
   border-radius: var(--radius-sm);
   box-shadow: 0 14px 32px var(--shadow-strong), 0 0 0 1px var(--line);
+  /* Room for the floating bottom navigation when scrolled into view. */
+  scroll-margin-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 28px);
+}
+
+.idea-pop--up {
+  top: auto;
+  bottom: calc(100% + 4px);
+  scroll-margin-top: 165px; /* below the sticky header */
 }
 
 /* Dinner is the right-hand column: open the list towards the left. */

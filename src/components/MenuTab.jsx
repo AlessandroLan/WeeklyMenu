@@ -24,11 +24,11 @@ export default function MenuTab({
 
   // Ideas are seeded by week + slot + how many times "more ideas" was pressed,
   // so they stay put between renders and only change when asked.
-  function getIdeas(seed, { dishCount, recipeCount }) {
+  function getIdeas(seed, { dishCount }) {
     const random = seededRandom(`${week}:${seed}`);
     return [
       ...pickDishIdeas({ dishes, stats: dishStats, planned, count: dishCount, random }),
-      ...pickRecipeIdeas({ ideas: recipeIdeas, dishes, planned, count: recipeCount, random }),
+      ...pickRecipeIdeas({ ideas: recipeIdeas, dishes, planned, perSource: 1, random }),
     ];
   }
 
@@ -57,7 +57,7 @@ export default function MenuTab({
       {todayEmpty.length > 0 && (
         <TodayIdeas
           emptyMeals={todayEmpty}
-          getIdeas={(shuffle) => getIdeas(`today:${shuffle}`, { dishCount: 1, recipeCount: 1 })}
+          getIdeas={(shuffle) => getIdeas(`today:${shuffle}`, { dishCount: 1 })}
           onPlace={placeToday}
         />
       )}
@@ -74,7 +74,7 @@ export default function MenuTab({
           value={menu?.[dayKey]}
           dishes={dishes}
           getIdeas={(mealKey, shuffle) =>
-            getIdeas(`${dayKey}:${mealKey}:${shuffle}`, { dishCount: 3, recipeCount: 1 })
+            getIdeas(`${dayKey}:${mealKey}:${shuffle}`, { dishCount: 3 })
           }
           nameForIdea={nameForIdea}
           onSave={onSave}

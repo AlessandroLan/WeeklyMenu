@@ -12,7 +12,7 @@ import { useLanguage } from "./lib/LanguageContext";
 import { formatWeekAsText, weekHasContent } from "./lib/shareWeek";
 import { parseItemText } from "./lib/quantity";
 import { capitalize, isSameDish, normalizeName } from "./lib/dishes";
-import { dishHistory } from "./lib/ideas";
+import { SOURCE_ORDER, dishHistory } from "./lib/ideas";
 
 export default function App() {
   const { lang, toggleLang, t } = useLanguage();
@@ -46,7 +46,7 @@ export default function App() {
         .single();
       week = created;
     }
-    const [{ data: shoppingItems }, { data: dishRows }, { data: weekRows }, { data: ideaRows }] =
+    const [{ data: shoppingItems }, { data: dishRows }, { data: weekRows }, ...ideaResults] =
       await Promise.all([
         supabase
           .from("shopping_items")
@@ -55,18 +55,23 @@ export default function App() {
           .order("created_at", { ascending: true }),
         supabase.from("dishes").select("*").order("name"),
         supabase.from("weeks").select("id, menu"),
-        supabase
-          .from("recipe_ideas")
-          .select("*")
-          .order("published_at", { ascending: false })
-          .limit(200),
+        // Newest ideas per site: a site that posts often mustn't crowd out one
+        // that posts a few times a week.
+        ...SOURCE_ORDER.map((source) =>
+          supabase
+            .from("recipe_ideas")
+            .select("*")
+            .eq("source", source)
+            .order("published_at", { ascending: false })
+            .limit(100)
+        ),
       ]);
 
     setMenu(week?.menu ?? {});
     setItems(shoppingItems ?? []);
     setDishes(dishRows ?? []);
     setAllWeeks(weekRows ?? []);
-    setRecipeIdeas(ideaRows ?? []);
+    setRecipeIdeas(ideaResults.flatMap(({ data }) => data ?? []));
     lastLoadedAt.current = Date.now();
   }, [id]);
 

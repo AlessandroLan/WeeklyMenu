@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 import { shortDayDate } from "../lib/dates";
@@ -34,8 +35,33 @@ export function RecipeLink({ url }) {
 // The ideas popover under an empty meal slot.
 export default function IdeaList({ items, onPick, onMore }) {
   const { t } = useLanguage();
+  const ref = useRef(null);
+  const [up, setUp] = useState(false);
+
+  // Near the end of the page the list would end up under the floating bottom
+  // navigation with no room left to scroll: open it upwards instead. Then bring
+  // the whole list into view.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const nav = document.querySelector(".app__nav-inner");
+    const navSpace = nav ? window.innerHeight - nav.getBoundingClientRect().top + 12 : 0;
+    const bottomOnPage = el.getBoundingClientRect().bottom + window.scrollY;
+    const lowestVisible = document.documentElement.scrollHeight - navSpace;
+    if (bottomOnPage > lowestVisible) setUp(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [up]);
+
   return (
-    <div className="idea-pop" role="dialog" aria-label={t("ideasTitle")}>
+    <div
+      ref={ref}
+      className={`idea-pop${up ? " idea-pop--up" : ""}`}
+      role="dialog"
+      aria-label={t("ideasTitle")}
+    >
       {items.length === 0 ? (
         <p className="idea-pop__empty">{t("ideasNone")}</p>
       ) : (

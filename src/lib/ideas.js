@@ -91,14 +91,23 @@ export function pickDishIdeas({ dishes, stats, planned, count = 3, random = Math
 }
 
 // New ideas from recipe sites: recent meal recipes that aren't already a
-// library dish or planned this week.
-export function pickRecipeIdeas({ ideas, dishes, planned, count = 1, random = Math.random }) {
-  const candidates = ideas
+// library dish or planned this week. `perSource` ideas from each site, so
+// both the Italian and the Polish site are always represented.
+export function pickRecipeIdeas({ ideas, dishes, planned, perSource = 1, random = Math.random }) {
+  const fresh = ideas
     .filter((idea) => idea.kind === "meal")
     .filter((idea) => !dishes.some((d) => isSameDish(d.name, idea.title)))
-    .filter((idea) => !planned.some((text) => isSameDish(idea.title, text)))
-    .map((idea) => ({ idea, weight: 1 }));
-  return weightedSample(candidates, count, random).map(({ idea }) => ({ type: "recipe", idea }));
+    .filter((idea) => !planned.some((text) => isSameDish(idea.title, text)));
+  const sources = [...new Set(fresh.map((idea) => idea.source))].sort(
+    (a, b) => SOURCE_ORDER.indexOf(a) - SOURCE_ORDER.indexOf(b)
+  );
+  return sources.flatMap((source) =>
+    weightedSample(
+      fresh.filter((idea) => idea.source === source).map((idea) => ({ idea, weight: 1 })),
+      perSource,
+      random
+    ).map(({ idea }) => ({ type: "recipe", idea }))
+  );
 }
 
 // Meal texts in a week's menu.
@@ -115,4 +124,8 @@ export function ideaName(item) {
 
 export const SOURCE_LABELS = {
   giallozafferano: "GialloZafferano",
+  kwestiasmaku: "Kwestia Smaku",
 };
+
+// Recipe sites, in the order their ideas are shown.
+export const SOURCE_ORDER = ["giallozafferano", "kwestiasmaku"];

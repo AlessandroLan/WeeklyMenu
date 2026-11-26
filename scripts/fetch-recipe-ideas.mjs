@@ -10,13 +10,17 @@
 
 import { pathToFileURL } from "node:url";
 
-const FEEDS = [{ source: "giallozafferano", url: "https://www.giallozafferano.it/feed" }];
+const FEEDS = [
+  { source: "giallozafferano", url: "https://www.giallozafferano.it/feed" },
+  { source: "kwestiasmaku", url: "https://www.kwestiasmaku.com/blog-kulinarny/feed" },
+];
 
-// Titles that are desserts, drinks or bakes rather than a lunch or dinner. The
-// feed has no categories, so this is a best guess from the title; the app only
-// suggests 'meal' ideas.
+// Titles that are desserts, drinks, sweet breakfasts or bakes rather than a
+// lunch or dinner (all stored as 'dessert'). The feeds have no categories, so
+// this is a best guess from the title; the app only suggests 'meal' ideas.
+// Italian first, then Polish.
 const DESSERT_WORDS = [
-  "torta", "torte", "crostata", "biscott", "cookie", "dolce", "dolci", "dessert",
+  "torta", "torte!", "crostata", "biscott", "cookie", "dolce", "dolci", "dessert",
   "tiramis", "muffin", "plumcake", "plum cake", "budino", "panna cotta", "cheesecake",
   "brownie", "ciambell", "mousse", "semifreddo", "gelato", "sorbetto", "panetton",
   "cioccolat", "cacao", "nutella", "candit", "uvetta", "mele",
@@ -25,6 +29,11 @@ const DESSERT_WORDS = [
   "marmellata", "liquore", "cocktail", "smoothie", "frullato", "crema pasticcera",
   "glassa", "croissant", "brioche", "babà", "cannoli", "sbriciolata", "strudel",
   "millefoglie", "profiterole", "salame di cioccolato", "torroncin", "torrone",
+  "ciast", "sernik", "serniczk", "seromakow", "makowiec", "makowc", "tort!", "torcik", "babka", "babeczk",
+  "szarlotk", "piernik", "pierniczk", "drożdżówk", "pączk", "faworki", "chrust", "kisiel",
+  "budyń", "budyni", "lody!", "deser", "keks", "bezy", "beza", "mazurek", "rogalik", "kompot",
+  "lemoniad", "koktajl", "nalewk", "dżem", "konfitur", "czekolad", "słodk", "gofr", "racuch",
+  "owsiank", "granol", "clafoutis", "dutch baby", "gruszk", "karmel",
 ];
 
 const UNESCAPE = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", "#39": "'" };
@@ -53,12 +62,25 @@ const SAVOURY_WORDS = [
   "salat", "patat", "fungh", "funghi", "verdur", "spinac", "zucchin", "broccol", "carciof",
   "porri", "cipoll", "prosciutt", "speck", "pancett", "salmon", "tonno", "pollo", "carne",
   "salsicc", "gorgonzol", "provol", "scamorz", "pecorin", "parmigian",
+  "kurczak", "drobiow", "wołow", "wieprzow", "mięs", "boczk", "boczek", "kiełbas", "szynk",
+  "łosoś", "łososi", "ryb", "dorsz", "śledz", "śledź", "tuńczyk", "krewet", "grzyb", "pieczark",
+  "ziemnia", "kapust", "cebul", "czosnk", "szpinak", "warzyw", "pomidor", "papryk", "fasol",
+  "soczewic", "ciecierzyc", "buracz",
 ];
+
+// Dessert words must start a word ("lody", ice cream, isn't "młody"); a
+// trailing "!" means the whole word ("tort", cake, isn't "tortellini").
+// Savoury words may appear anywhere ("insalata" contains "salat").
+function startsAWord(text, word) {
+  const whole = word.endsWith("!");
+  const stem = whole ? word.slice(0, -1) : word;
+  return new RegExp(`(^|[^\\p{L}])${stem}${whole ? "($|[^\\p{L}])" : ""}`, "u").test(text);
+}
 
 export function kindOf(title) {
   const t = title.toLowerCase();
   if (SAVOURY_WORDS.some((w) => t.includes(w))) return "meal";
-  return DESSERT_WORDS.some((w) => t.includes(w)) ? "dessert" : "meal";
+  return DESSERT_WORDS.some((w) => startsAWord(t, w)) ? "dessert" : "meal";
 }
 
 // Only title, link and date are read from each item.

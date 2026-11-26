@@ -76,11 +76,13 @@ versione.
 ## Idee da siti di ricette
 
 Ogni giorno il workflow [`.github/workflows/recipe-ideas.yml`](./.github/workflows/recipe-ideas.yml)
-legge il feed RSS pubblico di GialloZafferano e salva nella tabella
-`recipe_ideas` solo **titolo, link e data** delle nuove ricette (i dolci sono
-riconosciuti dal titolo e non vengono proposti come pranzo o cena). Testo e
-foto delle ricette non vengono copiati: toccando un'idea si apre la ricetta sul
-sito originale, nel rispetto delle condizioni d'uso del sito.
+legge i feed RSS pubblici di GialloZafferano (ricette italiane) e Kwestia Smaku
+(ricette polacche) e salva nella tabella `recipe_ideas` solo **titolo, link e
+data** delle nuove ricette (i dolci sono riconosciuti dal titolo, in italiano e
+in polacco, e non vengono proposti come pranzo o cena). Testo e foto delle
+ricette non vengono copiati: toccando un'idea si apre la ricetta sul sito
+originale, nel rispetto delle condizioni d'uso dei siti. Le idee mostrano
+sempre una ricetta per ciascun sito.
 
 Usa gli stessi secret `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` del deploy.
 Si può avviare a mano da **Actions -> Fetch recipe ideas -> Run workflow**, o in

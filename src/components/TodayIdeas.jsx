@@ -5,7 +5,8 @@ import { IdeaSubtitle, RecipeLink } from "./IdeaList";
 import { ideaName } from "../lib/ideas";
 
 // "Ideas for today" card at the top of the current week: one dish from your
-// own library and one new recipe idea, each placeable in today's empty slots.
+// own library and one new recipe from each recipe site, each placeable in
+// today's empty slots.
 export default function TodayIdeas({ emptyMeals, getIdeas, onPlace }) {
   const { t } = useLanguage();
   const [shuffle, setShuffle] = useState(0);
