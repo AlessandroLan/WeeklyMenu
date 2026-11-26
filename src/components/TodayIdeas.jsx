@@ -1,19 +1,14 @@
 import { useState } from "react";
-import { Lightbulb, RefreshCw } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 import { IdeaSubtitle, RecipeLink } from "./IdeaList";
 import { ideaName } from "../lib/ideas";
 
-// "Ideas for today" card at the top of the current week: one dish from your
-// own library and one new recipe from each recipe site, each placeable in
-// today's empty slots.
-export default function TodayIdeas({ emptyMeals, getIdeas, onPlace }) {
+// The opened "Ideas for today" list (the toggle chip lives in MenuTab): one
+// dish from your own library and one new recipe from each recipe site, each
+// placeable in today's empty slots.
+export default function TodayIdeas({ id, items, emptyMeals, onPlace, onMore }) {
   const { t } = useLanguage();
-  const [shuffle, setShuffle] = useState(0);
   const [busy, setBusy] = useState(false);
-  const items = getIdeas(shuffle);
-
-  if (emptyMeals.length === 0 || items.length === 0) return null;
 
   async function place(item, mealKey) {
     setBusy(true);
@@ -25,21 +20,7 @@ export default function TodayIdeas({ emptyMeals, getIdeas, onPlace }) {
   }
 
   return (
-    <section className="today-ideas" aria-label={t("todayIdeaTitle")}>
-      <div className="today-ideas__header">
-        <h2 className="today-ideas__title">
-          <Lightbulb size={15} strokeWidth={2.2} aria-hidden="true" />
-          {t("todayIdeaTitle")}
-        </h2>
-        <button
-          className="app__icon-button"
-          onClick={() => setShuffle((n) => n + 1)}
-          aria-label={t("ideasMore")}
-          title={t("ideasMore")}
-        >
-          <RefreshCw size={14} strokeWidth={2.2} />
-        </button>
-      </div>
+    <section id={id} className="today-ideas" aria-label={t("todayIdeaTitle")}>
       <ul className="today-ideas__list">
         {items.map((item) => (
           <li key={item.type === "recipe" ? item.idea.id : item.dish.id} className="today-ideas__item">
@@ -67,6 +48,9 @@ export default function TodayIdeas({ emptyMeals, getIdeas, onPlace }) {
           </li>
         ))}
       </ul>
+      <button type="button" className="idea-pop__more" onClick={onMore}>
+        {t("ideasMore")}
+      </button>
     </section>
   );
 }
