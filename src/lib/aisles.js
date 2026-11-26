@@ -1,6 +1,6 @@
 import { editDistance, normalizeName, typoAllowance } from "./dishes";
 
-// Supermarket sections. Keys are stored in the database (learned items, store
+// Supermarket sections. Keys are stored in the database (learned items, aisle
 // order), so keep them stable; names come from i18n ("aisle_<key>").
 export const AISLES = [
   "produce",
@@ -17,10 +17,7 @@ export const AISLES = [
   "other",
 ];
 
-export const STORES = ["lidl", "kaufland", "auchan"];
-export const STORE_LABELS = { lidl: "Lidl", kaufland: "Kaufland", auchan: "Auchan" };
-
-// Starting order for every store, until it's rearranged in the app.
+// Section order until it's rearranged in the app.
 export const DEFAULT_ORDER = AISLES;
 
 // Words that place an item, in Italian, English and Polish (the list is
@@ -230,7 +227,7 @@ export function aisleFor(itemText, learned) {
   return learned.get(aisleKey(itemText)) ?? guessAisle(itemText);
 }
 
-// Items grouped into sections, in the store's order, keeping each section's
+// Items grouped into sections, in the chosen order, keeping each section's
 // items in the order they were added. Empty sections are left out.
 export function groupByAisle(items, learned, order) {
   const sequence = [...order, ...AISLES.filter((a) => !order.includes(a))];

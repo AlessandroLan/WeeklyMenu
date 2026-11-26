@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Check, LayoutList, Plus, X } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 import { formatQuantity, itemToRawText } from "../lib/quantity";
-import { AISLES, DEFAULT_ORDER, STORES, STORE_LABELS, aisleFor, groupByAisle } from "../lib/aisles";
+import { AISLES, DEFAULT_ORDER, aisleFor, groupByAisle } from "../lib/aisles";
 import { useFitAboveNav } from "../lib/useFitAboveNav";
 
 // Small list of aisles to move an item to; the choice is remembered for the
@@ -154,8 +154,8 @@ function ShoppingItem({ item, aisle, onToggle, onDelete, onEdit, onMoveAisle }) 
   );
 }
 
-// Rearranging the aisles of one store. Saved for both phones on "Done".
-function AisleOrderPanel({ store, order, onSave, onClose }) {
+// Rearranging the sections. Saved for both phones on "Done".
+function AisleOrderPanel({ order, onSave, onClose }) {
   const { t } = useLanguage();
   const [draft, setDraft] = useState(() => [...order, ...AISLES.filter((a) => !order.includes(a))]);
 
@@ -171,7 +171,7 @@ function AisleOrderPanel({ store, order, onSave, onClose }) {
   return (
     <div className="dish-import">
       <div className="dish-import__header">
-        <h2 className="dish-import__title">{t("aisleOrderTitle", { store: STORE_LABELS[store] })}</h2>
+        <h2 className="dish-import__title">{t("aisleOrderTitle")}</h2>
       </div>
       <p className="dish-import__hint">{t("aisleOrderHint")}</p>
       <ol className="shopping-list shopping-list__items aisle-order">
@@ -205,7 +205,7 @@ function AisleOrderPanel({ store, order, onSave, onClose }) {
         <button
           className="dish-import__confirm"
           onClick={async () => {
-            await onSave(store, draft);
+            await onSave(draft);
             onClose();
           }}
         >
@@ -219,9 +219,7 @@ function AisleOrderPanel({ store, order, onSave, onClose }) {
 export default function ShoppingTab({
   items,
   learnedAisles,
-  storeOrders,
-  store,
-  onStoreChange,
+  aisleOrder,
   onSaveOrder,
   onMoveAisle,
   onAdd,
@@ -234,7 +232,7 @@ export default function ShoppingTab({
   const [text, setText] = useState("");
   const [ordering, setOrdering] = useState(false);
   const checkedCount = items.filter((i) => i.checked).length;
-  const order = storeOrders[store] ?? DEFAULT_ORDER;
+  const order = aisleOrder ?? DEFAULT_ORDER;
   const groups = useMemo(() => groupByAisle(items, learnedAisles, order), [items, learnedAisles, order]);
 
   function handleSubmit(e) {
@@ -247,34 +245,20 @@ export default function ShoppingTab({
 
   if (ordering) {
     return (
-      <AisleOrderPanel store={store} order={order} onSave={onSaveOrder} onClose={() => setOrdering(false)} />
+      <AisleOrderPanel order={order} onSave={onSaveOrder} onClose={() => setOrdering(false)} />
     );
   }
 
   return (
     <div className="shopping-tab">
-      <div className="shopping-tab__stores">
-        <div className="dishes-tab__sort" role="group" aria-label={t("storePickerAria")}>
-          {STORES.map((key) => (
-            <button
-              key={key}
-              className={`dishes-tab__chip${store === key ? " dishes-tab__chip--active" : ""}`}
-              aria-pressed={store === key}
-              onClick={() => onStoreChange(key)}
-            >
-              {STORE_LABELS[key]}
-            </button>
-          ))}
+      {items.length > 0 && (
+        <div className="shopping-tab__toolbar">
+          <button className="menu-tab__duplicate" onClick={() => setOrdering(true)}>
+            <ArrowUpDown size={14} strokeWidth={2.2} />
+            {t("aisleOrderButton")}
+          </button>
         </div>
-        <button
-          className="app__icon-button"
-          onClick={() => setOrdering(true)}
-          aria-label={t("aisleOrderButton")}
-          title={t("aisleOrderButton")}
-        >
-          <ArrowUpDown size={15} strokeWidth={2.2} />
-        </button>
-      </div>
+      )}
 
       <div className="shopping-list">
         {items.length === 0 && <p className="shopping-list__empty">{t("shoppingEmpty")}</p>}

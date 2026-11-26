@@ -698,11 +698,9 @@
 
 /* ---------- Shopping list by aisle ---------- */
 
-.shopping-tab__stores {
+.shopping-tab__toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: flex-end;
 }
 
 .shopping-aisle + .shopping-aisle {

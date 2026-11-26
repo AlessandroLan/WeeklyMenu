@@ -13,9 +13,7 @@ import { formatWeekAsText, weekHasContent } from "./lib/shareWeek";
 import { parseItemText } from "./lib/quantity";
 import { capitalize, isSameDish, normalizeName } from "./lib/dishes";
 import { SOURCE_ORDER, dishHistory } from "./lib/ideas";
-import { STORES, aisleKey } from "./lib/aisles";
-
-const STORE_KEY = "menu-app-store";
+import { aisleKey } from "./lib/aisles";
 
 export default function App() {
   const { lang, toggleLang, t } = useLanguage();
@@ -28,14 +26,10 @@ export default function App() {
   // Every saved week (for dish history) and recipe ideas from outside sites.
   const [allWeeks, setAllWeeks] = useState([]);
   const [recipeIdeas, setRecipeIdeas] = useState([]);
-  // Shopping list by aisle: items moved by hand (name -> aisle), each store's
-  // aisle order, and the store this phone last shopped in.
+  // Shopping list by aisle: items moved by hand (name -> aisle) and the
+  // section order, both shared between phones. null = default order.
   const [learnedAisles, setLearnedAisles] = useState(() => new Map());
-  const [storeOrders, setStoreOrders] = useState({});
-  const [store, setStore] = useState(() => {
-    const saved = localStorage.getItem(STORE_KEY);
-    return STORES.includes(saved) ? saved : STORES[0];
-  });
+  const [aisleOrder, setAisleOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const lastLoadedAt = useRef(0);
@@ -62,7 +56,7 @@ export default function App() {
       { data: dishRows },
       { data: weekRows },
       { data: aisleRows },
-      { data: layoutRows },
+      { data: layoutRow },
       ...ideaResults
     ] = await Promise.all([
         supabase
@@ -73,7 +67,7 @@ export default function App() {
         supabase.from("dishes").select("*").order("name"),
         supabase.from("weeks").select("id, menu"),
         supabase.from("aisle_memory").select("key, aisle"),
-        supabase.from("store_layouts").select("store, aisle_order"),
+        supabase.from("aisle_layout").select("aisle_order").eq("id", "default").maybeSingle(),
         // Newest ideas per site: a site that posts often mustn't crowd out one
         // that posts a few times a week.
         ...SOURCE_ORDER.map((source) =>
@@ -92,7 +86,7 @@ export default function App() {
     setAllWeeks(weekRows ?? []);
     setRecipeIdeas(ideaResults.flatMap(({ data }) => data ?? []));
     setLearnedAisles(new Map((aisleRows ?? []).map((r) => [r.key, r.aisle])));
-    setStoreOrders(Object.fromEntries((layoutRows ?? []).map((r) => [r.store, r.aisle_order])));
+    setAisleOrder(layoutRow?.aisle_order ?? null);
     lastLoadedAt.current = Date.now();
   }, [id]);
 
@@ -237,11 +231,6 @@ export default function App() {
     await supabase.from("shopping_items").delete().eq("id", itemId);
   }
 
-  function chooseStore(next) {
-    setStore(next);
-    localStorage.setItem(STORE_KEY, next);
-  }
-
   // Moving an item to another aisle teaches the app that name for next time
   // (on both phones).
   async function moveItemAisle(item, aisle) {
@@ -251,9 +240,9 @@ export default function App() {
     await supabase.from("aisle_memory").upsert({ key, aisle });
   }
 
-  async function saveStoreOrder(storeKey, order) {
-    setStoreOrders((prev) => ({ ...prev, [storeKey]: order }));
-    await supabase.from("store_layouts").upsert({ store: storeKey, aisle_order: order });
+  async function saveAisleOrder(order) {
+    setAisleOrder(order);
+    await supabase.from("aisle_layout").upsert({ id: "default", aisle_order: order });
   }
 
   async function clearChecked() {
@@ -425,10 +414,8 @@ export default function App() {
           <ShoppingTab
             items={items}
             learnedAisles={learnedAisles}
-            storeOrders={storeOrders}
-            store={store}
-            onStoreChange={chooseStore}
-            onSaveOrder={saveStoreOrder}
+            aisleOrder={aisleOrder}
+            onSaveOrder={saveAisleOrder}
             onMoveAisle={moveItemAisle}
             onAdd={addItem}
             onToggle={toggleItem}
