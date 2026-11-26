@@ -4,7 +4,7 @@ import { DAY_LABELS } from "../lib/i18n";
 import { useLanguage } from "../lib/LanguageContext";
 import DayCard from "./DayCard";
 
-export default function MenuTab({ monday, menu, onSave, onDuplicate }) {
+export default function MenuTab({ monday, menu, dishes, onSave, onDuplicate }) {
   const { lang, t } = useLanguage();
 
   return (
@@ -20,6 +20,7 @@ export default function MenuTab({ monday, menu, onSave, onDuplicate }) {
           label={DAY_LABELS[lang][dayKey]}
           date={dateForDayIndex(monday, index)}
           value={menu?.[dayKey]}
+          dishes={dishes}
           onSave={onSave}
         />
       ))}
