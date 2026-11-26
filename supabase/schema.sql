@@ -159,3 +159,6 @@ create policy "anon add recipe_ideas"
   with check (true);
 
 grant select, insert on recipe_ideas to anon;
+-- Some projects grant every privilege on new tables by default; take back the
+-- ones the app must not have.
+revoke update, delete, truncate, references, trigger on recipe_ideas from anon;
