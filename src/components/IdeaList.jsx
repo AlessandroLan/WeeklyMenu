@@ -1,8 +1,9 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { ExternalLink } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 import { shortDayDate } from "../lib/dates";
 import { SOURCE_LABELS, ideaName } from "../lib/ideas";
+import { useFitAboveNav } from "../lib/useFitAboveNav";
 
 // One line of explanation under an idea: when it was last made, or where a new
 // recipe idea comes from.
@@ -36,24 +37,7 @@ export function RecipeLink({ url }) {
 export default function IdeaList({ items, onPick, onMore }) {
   const { t } = useLanguage();
   const ref = useRef(null);
-  const [up, setUp] = useState(false);
-
-  // Near the end of the page the list would end up under the floating bottom
-  // navigation with no room left to scroll: open it upwards instead. Then bring
-  // the whole list into view.
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const nav = document.querySelector(".app__nav-inner");
-    const navSpace = nav ? window.innerHeight - nav.getBoundingClientRect().top + 12 : 0;
-    const bottomOnPage = el.getBoundingClientRect().bottom + window.scrollY;
-    const lowestVisible = document.documentElement.scrollHeight - navSpace;
-    if (bottomOnPage > lowestVisible) setUp(true);
-  }, []);
-
-  useLayoutEffect(() => {
-    ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [up]);
+  const up = useFitAboveNav(ref);
 
   return (
     <div

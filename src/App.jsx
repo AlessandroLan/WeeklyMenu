@@ -13,6 +13,7 @@ import { formatWeekAsText, weekHasContent } from "./lib/shareWeek";
 import { parseItemText } from "./lib/quantity";
 import { capitalize, isSameDish, normalizeName } from "./lib/dishes";
 import { SOURCE_ORDER, dishHistory } from "./lib/ideas";
+import { aisleKey } from "./lib/aisles";
 
 export default function App() {
   const { lang, toggleLang, t } = useLanguage();
@@ -25,6 +26,10 @@ export default function App() {
   // Every saved week (for dish history) and recipe ideas from outside sites.
   const [allWeeks, setAllWeeks] = useState([]);
   const [recipeIdeas, setRecipeIdeas] = useState([]);
+  // Shopping list by aisle: items moved by hand (name -> aisle) and the
+  // section order, both shared between phones. null = default order.
+  const [learnedAisles, setLearnedAisles] = useState(() => new Map());
+  const [aisleOrder, setAisleOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const lastLoadedAt = useRef(0);
@@ -46,8 +51,14 @@ export default function App() {
         .single();
       week = created;
     }
-    const [{ data: shoppingItems }, { data: dishRows }, { data: weekRows }, ...ideaResults] =
-      await Promise.all([
+    const [
+      { data: shoppingItems },
+      { data: dishRows },
+      { data: weekRows },
+      { data: aisleRows },
+      { data: layoutRow },
+      ...ideaResults
+    ] = await Promise.all([
         supabase
           .from("shopping_items")
           .select("*")
@@ -55,6 +66,8 @@ export default function App() {
           .order("created_at", { ascending: true }),
         supabase.from("dishes").select("*").order("name"),
         supabase.from("weeks").select("id, menu"),
+        supabase.from("aisle_memory").select("key, aisle"),
+        supabase.from("aisle_layout").select("aisle_order").eq("id", "default").maybeSingle(),
         // Newest ideas per site: a site that posts often mustn't crowd out one
         // that posts a few times a week.
         ...SOURCE_ORDER.map((source) =>
@@ -72,6 +85,8 @@ export default function App() {
     setDishes(dishRows ?? []);
     setAllWeeks(weekRows ?? []);
     setRecipeIdeas(ideaResults.flatMap(({ data }) => data ?? []));
+    setLearnedAisles(new Map((aisleRows ?? []).map((r) => [r.key, r.aisle])));
+    setAisleOrder(layoutRow?.aisle_order ?? null);
     lastLoadedAt.current = Date.now();
   }, [id]);
 
@@ -214,6 +229,20 @@ export default function App() {
   async function deleteItem(itemId) {
     setItems((prev) => prev.filter((it) => it.id !== itemId));
     await supabase.from("shopping_items").delete().eq("id", itemId);
+  }
+
+  // Moving an item to another aisle teaches the app that name for next time
+  // (on both phones).
+  async function moveItemAisle(item, aisle) {
+    const key = aisleKey(item.text);
+    setLearnedAisles((prev) => new Map(prev).set(key, aisle));
+    showToast(t("aisleMoved", { item: item.text, aisle: t(`aisle_${aisle}`) }));
+    await supabase.from("aisle_memory").upsert({ key, aisle });
+  }
+
+  async function saveAisleOrder(order) {
+    setAisleOrder(order);
+    await supabase.from("aisle_layout").upsert({ id: "default", aisle_order: order });
   }
 
   async function clearChecked() {
@@ -384,6 +413,10 @@ export default function App() {
         ) : (
           <ShoppingTab
             items={items}
+            learnedAisles={learnedAisles}
+            aisleOrder={aisleOrder}
+            onSaveOrder={saveAisleOrder}
+            onMoveAisle={moveItemAisle}
             onAdd={addItem}
             onToggle={toggleItem}
             onDelete={deleteItem}
