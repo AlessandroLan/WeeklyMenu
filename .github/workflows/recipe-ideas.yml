@@ -1,0 +1,27 @@
+name: Fetch recipe ideas
+
+# Once a day, read public recipe RSS feeds and save new titles + links to the
+# recipe_ideas table (see scripts/fetch-recipe-ideas.mjs). Can also be started
+# by hand from the Actions tab.
+on:
+  schedule:
+    - cron: "17 5 * * *" # every day at 05:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: node scripts/fetch-recipe-ideas.mjs
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}

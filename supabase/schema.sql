@@ -122,3 +122,43 @@ begin
     alter publication supabase_realtime add table dishes;
   end if;
 end $$;
+
+-- Where a dish came from, e.g. a recipe page it was added from (phase 2).
+alter table dishes add column if not exists source_url text;
+
+-- ---------------------------------------------------------------------------
+-- Recipe ideas from outside (phase 2): titles and links only, read from public
+-- RSS feeds once a day by .github/workflows/recipe-ideas.yml. No recipe text or
+-- photos are stored - tapping an idea opens the recipe on its own site.
+create table if not exists recipe_ideas (
+  id uuid primary key default gen_random_uuid(),
+  source text not null,              -- e.g. 'giallozafferano'
+  title text not null,
+  url text not null unique,
+  kind text not null default 'meal', -- 'meal' or 'dessert' (from the title)
+  published_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists recipe_ideas_published_idx on recipe_ideas(published_at desc);
+
+alter table recipe_ideas enable row level security;
+
+-- The app only reads ideas; the daily job adds new ones. No update or delete,
+-- so nobody holding the public key can change or remove existing entries.
+drop policy if exists "anon read recipe_ideas" on recipe_ideas;
+create policy "anon read recipe_ideas"
+  on recipe_ideas for select
+  to anon
+  using (true);
+
+drop policy if exists "anon add recipe_ideas" on recipe_ideas;
+create policy "anon add recipe_ideas"
+  on recipe_ideas for insert
+  to anon
+  with check (true);
+
+grant select, insert on recipe_ideas to anon;
+-- Some projects grant every privilege on new tables by default; take back the
+-- ones the app must not have.
+revoke update, delete, truncate, references, trigger on recipe_ideas from anon;

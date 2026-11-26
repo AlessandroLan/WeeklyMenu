@@ -6,12 +6,13 @@ import WeekNav from "./components/WeekNav";
 import MenuTab from "./components/MenuTab";
 import ShoppingTab from "./components/ShoppingTab";
 import DishesTab from "./components/DishesTab";
-import { mondayOf, addWeeks, weekId } from "./lib/dates";
+import { mondayOf, addWeeks, weekId, isSameWeek } from "./lib/dates";
 import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 import { useLanguage } from "./lib/LanguageContext";
 import { formatWeekAsText, weekHasContent } from "./lib/shareWeek";
 import { parseItemText } from "./lib/quantity";
 import { capitalize, isSameDish, normalizeName } from "./lib/dishes";
+import { SOURCE_ORDER, dishHistory } from "./lib/ideas";
 
 export default function App() {
   const { lang, toggleLang, t } = useLanguage();
@@ -21,6 +22,9 @@ export default function App() {
   const [menu, setMenu] = useState({});
   const [items, setItems] = useState([]);
   const [dishes, setDishes] = useState([]);
+  // Every saved week (for dish history) and recipe ideas from outside sites.
+  const [allWeeks, setAllWeeks] = useState([]);
+  const [recipeIdeas, setRecipeIdeas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const lastLoadedAt = useRef(0);
@@ -42,18 +46,32 @@ export default function App() {
         .single();
       week = created;
     }
-    const [{ data: shoppingItems }, { data: dishRows }] = await Promise.all([
-      supabase
-        .from("shopping_items")
-        .select("*")
-        .eq("week_id", id)
-        .order("created_at", { ascending: true }),
-      supabase.from("dishes").select("*").order("name"),
-    ]);
+    const [{ data: shoppingItems }, { data: dishRows }, { data: weekRows }, ...ideaResults] =
+      await Promise.all([
+        supabase
+          .from("shopping_items")
+          .select("*")
+          .eq("week_id", id)
+          .order("created_at", { ascending: true }),
+        supabase.from("dishes").select("*").order("name"),
+        supabase.from("weeks").select("id, menu"),
+        // Newest ideas per site: a site that posts often mustn't crowd out one
+        // that posts a few times a week.
+        ...SOURCE_ORDER.map((source) =>
+          supabase
+            .from("recipe_ideas")
+            .select("*")
+            .eq("source", source)
+            .order("published_at", { ascending: false })
+            .limit(100)
+        ),
+      ]);
 
     setMenu(week?.menu ?? {});
     setItems(shoppingItems ?? []);
     setDishes(dishRows ?? []);
+    setAllWeeks(weekRows ?? []);
+    setRecipeIdeas(ideaResults.flatMap(({ data }) => data ?? []));
     lastLoadedAt.current = Date.now();
   }, [id]);
 
@@ -70,6 +88,13 @@ export default function App() {
       cancelled = true;
     };
   }, [loadWeek, unlocked]);
+
+  const dishStats = useMemo(() => {
+    const weeks = allWeeks.some((w) => w.id === id)
+      ? allWeeks.map((w) => (w.id === id ? { ...w, menu } : w))
+      : [...allWeeks, { id, menu }];
+    return dishHistory(weeks, dishes);
+  }, [allWeeks, id, menu, dishes]);
 
   async function handleRefresh() {
     await loadWeek();
@@ -253,6 +278,22 @@ export default function App() {
     }
   }
 
+  // Picking an idea from a recipe site: it becomes a library dish (with its
+  // link) so it shows up in history and suggestions from then on. Returns the
+  // dish name to put in the menu.
+  async function adoptRecipeIdea(idea) {
+    const existing = dishes.find((d) => isSameDish(d.name, idea.title));
+    if (existing) return existing.name;
+    const name = capitalize(idea.title);
+    const { data } = await supabase
+      .from("dishes")
+      .insert({ name, source_url: idea.url })
+      .select()
+      .single();
+    if (data) setDishes((prev) => [...prev, data]);
+    return name;
+  }
+
   async function loadAllWeeks() {
     const { data } = await supabase.from("weeks").select("id, menu");
     return data ?? [];
@@ -322,12 +363,18 @@ export default function App() {
             monday={monday}
             menu={menu}
             dishes={dishes}
+            dishStats={dishStats}
+            recipeIdeas={recipeIdeas}
+            isCurrentWeek={isSameWeek(monday, new Date())}
             onSave={saveMeal}
+            onAdoptIdea={adoptRecipeIdea}
             onDuplicate={duplicateLastWeek}
+            showToast={showToast}
           />
         ) : tab === "piatti" ? (
           <DishesTab
             dishes={dishes}
+            dishStats={dishStats}
             onAdd={addDish}
             onRename={renameDish}
             onDelete={deleteDish}

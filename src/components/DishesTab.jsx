@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, History, Plus, Search, X } from "lucide-react";
+import { Check, ExternalLink, History, Plus, Search, X } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 import { shortDayDate } from "../lib/dates";
 import { importCandidates, mealsFromWeeks, normalizeName } from "../lib/dishes";
 
-function DishRow({ dish, onRename, onDelete }) {
-  const { t } = useLanguage();
+function DishRow({ dish, stats, onRename, onDelete }) {
+  const { lang, t } = useLanguage();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(dish.name);
   const inputRef = useRef(null);
@@ -48,13 +48,32 @@ function DishRow({ dish, onRename, onDelete }) {
           aria-label={t("dishesEditAria", { name: dish.name })}
         />
       ) : (
-        <button
-          className="shopping-item__text"
-          onClick={startEditing}
-          aria-label={t("dishesEditAria", { name: dish.name })}
+        <div className="dish-row__body">
+          <button
+            className="shopping-item__text"
+            onClick={startEditing}
+            aria-label={t("dishesEditAria", { name: dish.name })}
+          >
+            {dish.name}
+          </button>
+          <span className="dish-row__meta">
+            {stats
+              ? t("dishStats", { count: stats.count, date: shortDayDate(stats.lastDate, lang) })
+              : t("dishNever")}
+          </span>
+        </div>
+      )}
+      {!editing && dish.source_url && (
+        <a
+          className="shopping-item__delete dish-row__link"
+          href={dish.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t("dishOpenRecipe")}
+          title={t("dishOpenRecipe")}
         >
-          {dish.name}
-        </button>
+          <ExternalLink size={16} strokeWidth={2.2} />
+        </a>
       )}
       <button
         className="shopping-item__delete"
@@ -179,17 +198,29 @@ function ImportPanel({ dishes, loadAllWeeks, onImport, onClose }) {
   );
 }
 
-export default function DishesTab({ dishes, onAdd, onRename, onDelete, onImport, loadAllWeeks }) {
+const byName = (a, b) => a.name.localeCompare(b.name);
+
+export default function DishesTab({ dishes, dishStats, onAdd, onRename, onDelete, onImport, loadAllWeeks }) {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("alpha");
   const [newName, setNewName] = useState("");
   const [importing, setImporting] = useState(false);
 
   const visible = useMemo(() => {
     const q = normalizeName(query);
     const list = q ? dishes.filter((d) => normalizeName(d.name).includes(q)) : dishes;
-    return [...list].sort((a, b) => a.name.localeCompare(b.name));
-  }, [dishes, query]);
+    const count = (d) => dishStats.get(d.id)?.count ?? 0;
+    // Never-made dishes count as "longest ago" when rediscovering.
+    const last = (d) => dishStats.get(d.id)?.lastDate?.getTime() ?? 0;
+    const compare =
+      sort === "most"
+        ? (a, b) => count(b) - count(a) || byName(a, b)
+        : sort === "oldest"
+          ? (a, b) => last(a) - last(b) || byName(a, b)
+          : byName;
+    return [...list].sort(compare);
+  }, [dishes, dishStats, query, sort]);
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -223,6 +254,25 @@ export default function DishesTab({ dishes, onAdd, onRename, onDelete, onImport,
         </label>
       )}
 
+      {dishes.length > 1 && (
+        <div className="dishes-tab__sort" role="group">
+          {[
+            ["alpha", t("dishesSortAlpha")],
+            ["most", t("dishesSortMost")],
+            ["oldest", t("dishesSortOldest")],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              className={`dishes-tab__chip${sort === key ? " dishes-tab__chip--active" : ""}`}
+              aria-pressed={sort === key}
+              onClick={() => setSort(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="shopping-list">
         {dishes.length === 0 ? (
           <p className="shopping-list__empty">{t("dishesEmpty")}</p>
@@ -231,7 +281,13 @@ export default function DishesTab({ dishes, onAdd, onRename, onDelete, onImport,
         ) : (
           <ul className="shopping-list__items">
             {visible.map((dish) => (
-              <DishRow key={dish.id} dish={dish} onRename={onRename} onDelete={onDelete} />
+              <DishRow
+                key={dish.id}
+                dish={dish}
+                stats={dishStats.get(dish.id)}
+                onRename={onRename}
+                onDelete={onDelete}
+              />
             ))}
           </ul>
         )}

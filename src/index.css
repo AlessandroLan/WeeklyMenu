@@ -735,7 +735,268 @@
   background: var(--teal-tint);
 }
 
+/* ---------- Ideas (empty meal slots, "ideas for today") ---------- */
+
+.day-card__ideas {
+  position: absolute;
+  top: -4px;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--citrus-tint);
+  color: #9a6413;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.day-card__ideas:active {
+  transform: scale(0.9);
+}
+
+.day-card__ideas--open {
+  background: var(--citrus);
+  color: var(--ink);
+}
+
+.idea-pop__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.idea-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -6px;
+  z-index: 7;
+  width: min(290px, calc(100vw - 2 * var(--gutter) - 24px));
+  padding: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 14px 32px var(--shadow-strong), 0 0 0 1px var(--line);
+  /* Room for the floating bottom navigation when scrolled into view. */
+  scroll-margin-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 28px);
+}
+
+.idea-pop--up {
+  top: auto;
+  bottom: calc(100% + 4px);
+  scroll-margin-top: 165px; /* below the sticky header */
+}
+
+/* Dinner is the right-hand column: open the list towards the left. */
+.day-card__meal-wrap + .day-card__meal-wrap .idea-pop {
+  left: auto;
+  right: -6px;
+}
+
+.idea-pop__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.idea-pop__empty {
+  margin: 8px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.idea {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.idea__pick {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.idea__pick:hover,
+.idea__pick:active {
+  background: var(--teal-tint);
+}
+
+.idea__name {
+  font-size: 14px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.idea__sub {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+.idea__sub--new {
+  color: #9a6413;
+  font-weight: 600;
+}
+
+.idea__link {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  vertical-align: middle;
+  color: var(--teal);
+}
+
+.idea-pop__more {
+  display: block;
+  width: 100%;
+  margin-top: 2px;
+  border: none;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  padding: 9px 10px 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--teal);
+  text-align: left;
+  cursor: pointer;
+}
+
+.today-ideas {
+  background: var(--citrus-tint);
+  border-radius: var(--radius);
+  padding: 14px 16px 10px;
+}
+
+.today-ideas__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.today-ideas__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9a6413;
+}
+
+.today-ideas__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.today-ideas__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.today-ideas__item + .today-ideas__item {
+  border-top: 1px solid rgba(154, 100, 19, 0.18);
+}
+
+.today-ideas__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.today-ideas__text .idea__name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.today-ideas__text .idea__link {
+  width: 22px;
+  height: 18px;
+}
+
+.today-ideas__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.today-ideas__place {
+  border: none;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--teal-dark);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.today-ideas__place:disabled {
+  opacity: 0.5;
+}
+
 /* ---------- Dishes tab ---------- */
+
+.dish-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.dish-row__meta {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+.dishes-tab__sort {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dishes-tab__chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.dishes-tab__chip--active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
 
 .dishes-tab__search {
   display: flex;
