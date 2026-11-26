@@ -193,7 +193,9 @@
 .app__toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 34px);
+  /* Above the floating add bar (Spesa/Piatti tabs), so a message never covers
+     the field being typed in. */
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 82px);
   transform: translateX(-50%);
   z-index: 20;
   max-width: calc(100% - 2 * var(--gutter));
@@ -692,6 +694,213 @@
 
 .shopping-add__button:active {
   transform: scale(0.92);
+}
+
+/* ---------- Dish suggestions (under a meal field) ---------- */
+
+.day-card__meal-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.dish-suggest {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -6px;
+  right: -6px;
+  z-index: 6;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 28px var(--shadow-strong), 0 0 0 1px var(--line);
+}
+
+.dish-suggest__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.dish-suggest__item:hover,
+.dish-suggest__item:active {
+  background: var(--teal-tint);
+}
+
+/* ---------- Dishes tab ---------- */
+
+.dishes-tab__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 0 16px;
+  color: var(--ink-faint);
+  box-shadow: 0 1px 0 var(--line);
+}
+
+.dishes-tab__search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 12px 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.dishes-tab__search input:focus {
+  outline: none;
+}
+
+.dish-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.dish-row:last-child {
+  border-bottom: none;
+}
+
+.dishes-tab__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-faint);
+  padding: 0 4px;
+}
+
+.dishes-tab__footer .menu-tab__duplicate {
+  margin-left: auto;
+}
+
+/* Import from history */
+
+.dish-import {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dish-import__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dish-import__title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dish-import__hint {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.dish-import__bulk {
+  display: flex;
+  gap: 16px;
+}
+
+.dish-import__bulk button {
+  border: none;
+  background: none;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--teal);
+  cursor: pointer;
+}
+
+.dish-import__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dish-import__name {
+  border: none;
+  border-bottom: 1.5px solid transparent;
+  background: transparent;
+  padding: 2px 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.dish-import__name:focus {
+  outline: none;
+  border-bottom-color: var(--teal);
+}
+
+.dish-import__meta {
+  font-size: 12px;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.dish-import__row .shopping-item__check[aria-checked="true"] {
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.dish-import__row--off .dish-import__name {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+}
+
+.dish-import__actions {
+  position: sticky;
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 22px);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dish-import__cancel,
+.dish-import__confirm {
+  border: none;
+  border-radius: 999px;
+  padding: 13px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 24px var(--shadow-strong);
+}
+
+.dish-import__cancel {
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.dish-import__confirm {
+  background: var(--teal);
+  color: #fff;
+}
+
+.dish-import__confirm:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* ---------- PIN gate ---------- */

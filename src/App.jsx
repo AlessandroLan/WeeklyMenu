@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Languages, RefreshCw, Share2, ShoppingCart } from "lucide-react";
+import { BookOpen, CalendarDays, Languages, RefreshCw, Share2, ShoppingCart } from "lucide-react";
 import PinGate, { isUnlocked } from "./components/PinGate";
 import PullToRefresh from "./components/PullToRefresh";
 import WeekNav from "./components/WeekNav";
 import MenuTab from "./components/MenuTab";
 import ShoppingTab from "./components/ShoppingTab";
+import DishesTab from "./components/DishesTab";
 import { mondayOf, addWeeks, weekId } from "./lib/dates";
 import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 import { useLanguage } from "./lib/LanguageContext";
 import { formatWeekAsText, weekHasContent } from "./lib/shareWeek";
 import { parseItemText } from "./lib/quantity";
+import { capitalize, isSameDish, normalizeName } from "./lib/dishes";
 
 export default function App() {
   const { lang, toggleLang, t } = useLanguage();
@@ -18,6 +20,7 @@ export default function App() {
   const [tab, setTab] = useState("menu");
   const [menu, setMenu] = useState({});
   const [items, setItems] = useState([]);
+  const [dishes, setDishes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const lastLoadedAt = useRef(0);
@@ -39,14 +42,18 @@ export default function App() {
         .single();
       week = created;
     }
-    const { data: shoppingItems } = await supabase
-      .from("shopping_items")
-      .select("*")
-      .eq("week_id", id)
-      .order("created_at", { ascending: true });
+    const [{ data: shoppingItems }, { data: dishRows }] = await Promise.all([
+      supabase
+        .from("shopping_items")
+        .select("*")
+        .eq("week_id", id)
+        .order("created_at", { ascending: true }),
+      supabase.from("dishes").select("*").order("name"),
+    ]);
 
     setMenu(week?.menu ?? {});
     setItems(shoppingItems ?? []);
+    setDishes(dishRows ?? []);
     lastLoadedAt.current = Date.now();
   }, [id]);
 
@@ -190,6 +197,67 @@ export default function App() {
     await supabase.from("shopping_items").delete().in("id", checkedIds);
   }
 
+  // ---- Dish library ----
+
+  // The library dish this name clashes with (same dish, maybe spelled
+  // differently), if any.
+  function existingDish(name, exceptId) {
+    return dishes.find((d) => d.id !== exceptId && isSameDish(d.name, name));
+  }
+
+  async function addDish(rawName) {
+    const name = capitalize(rawName);
+    const clash = existingDish(name);
+    if (clash) {
+      showToast(t("dishesExists", { name: clash.name }));
+      return false;
+    }
+    const { data } = await supabase.from("dishes").insert({ name }).select().single();
+    if (data) setDishes((prev) => [...prev, data]);
+    return Boolean(data);
+  }
+
+  async function renameDish(dishId, rawName) {
+    const name = capitalize(rawName);
+    const clash = existingDish(name, dishId);
+    if (clash) {
+      showToast(t("dishesExists", { name: clash.name }));
+      return;
+    }
+    setDishes((prev) => prev.map((d) => (d.id === dishId ? { ...d, name } : d)));
+    await supabase.from("dishes").update({ name }).eq("id", dishId);
+  }
+
+  async function deleteDish(dishId) {
+    setDishes((prev) => prev.filter((d) => d.id !== dishId));
+    await supabase.from("dishes").delete().eq("id", dishId);
+  }
+
+  async function importDishes(names) {
+    // Skip names already in the library, and repeats within the batch (e.g.
+    // two rows renamed to the same thing on the import screen).
+    const seen = new Set(dishes.map((d) => normalizeName(d.name)));
+    const rows = [];
+    for (const raw of names) {
+      const name = capitalize(raw);
+      const n = normalizeName(name);
+      if (!n || seen.has(n)) continue;
+      seen.add(n);
+      rows.push({ name });
+    }
+    if (rows.length === 0) return;
+    const { data } = await supabase.from("dishes").insert(rows).select();
+    if (data) {
+      setDishes((prev) => [...prev, ...data]);
+      showToast(t("dishesImported", { count: data.length }));
+    }
+  }
+
+  async function loadAllWeeks() {
+    const { data } = await supabase.from("weeks").select("id, menu");
+    return data ?? [];
+  }
+
   if (!unlocked) {
     return <PinGate onUnlock={() => setUnlocked(true)} />;
   }
@@ -235,12 +303,14 @@ export default function App() {
             </button>
           </div>
         </div>
-        <WeekNav
-          monday={monday}
-          onPrev={() => setMonday(addWeeks(monday, -1))}
-          onNext={() => setMonday(addWeeks(monday, 1))}
-          onToday={() => setMonday(mondayOf(new Date()))}
-        />
+        {tab !== "piatti" && (
+          <WeekNav
+            monday={monday}
+            onPrev={() => setMonday(addWeeks(monday, -1))}
+            onNext={() => setMonday(addWeeks(monday, 1))}
+            onToday={() => setMonday(mondayOf(new Date()))}
+          />
+        )}
       </header>
 
       <PullToRefresh onRefresh={handleRefresh}>
@@ -248,7 +318,22 @@ export default function App() {
         {loading ? (
           <p className="app__loading">{t("loading")}</p>
         ) : tab === "menu" ? (
-          <MenuTab monday={monday} menu={menu} onSave={saveMeal} onDuplicate={duplicateLastWeek} />
+          <MenuTab
+            monday={monday}
+            menu={menu}
+            dishes={dishes}
+            onSave={saveMeal}
+            onDuplicate={duplicateLastWeek}
+          />
+        ) : tab === "piatti" ? (
+          <DishesTab
+            dishes={dishes}
+            onAdd={addDish}
+            onRename={renameDish}
+            onDelete={deleteDish}
+            onImport={importDishes}
+            loadAllWeeks={loadAllWeeks}
+          />
         ) : (
           <ShoppingTab
             items={items}
@@ -277,6 +362,13 @@ export default function App() {
           >
             <ShoppingCart size={17} strokeWidth={2.2} />
             {t("navSpesa")}
+          </button>
+          <button
+            className={`app__nav-item${tab === "piatti" ? " app__nav-item--active" : ""}`}
+            onClick={() => setTab("piatti")}
+          >
+            <BookOpen size={17} strokeWidth={2.2} />
+            {t("navPiatti")}
           </button>
         </div>
       </nav>
