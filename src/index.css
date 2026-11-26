@@ -327,6 +327,33 @@
   transform: scale(0.97);
 }
 
+.menu-tab__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Slightly tighter so both chips fit on one line on a phone. */
+.menu-tab__toolbar .menu-tab__duplicate {
+  gap: 5px;
+  padding: 7px 11px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.menu-tab__ideas {
+  background: var(--citrus-tint);
+  color: #9a6413;
+}
+
+.menu-tab__chevron {
+  transition: transform 0.18s ease;
+}
+
+.menu-tab__ideas--open .menu-tab__chevron {
+  transform: rotate(180deg);
+}
+
 .day-card {
   background: var(--surface);
   border-radius: var(--radius);
@@ -975,28 +1002,11 @@
 }
 
 .today-ideas {
-  background: var(--citrus-tint);
-  border-radius: var(--radius);
-  padding: 14px 16px 10px;
-}
-
-.today-ideas__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.today-ideas__title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #9a6413;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 4px 14px 6px;
+  box-shadow: 0 1px 0 var(--line);
+  animation: rise 0.2s ease both;
 }
 
 .today-ideas__list {
@@ -1013,7 +1023,7 @@
 }
 
 .today-ideas__item + .today-ideas__item {
-  border-top: 1px solid rgba(154, 100, 19, 0.18);
+  border-top: 1px solid var(--line);
 }
 
 .today-ideas__text {
@@ -1025,7 +1035,7 @@
 }
 
 .today-ideas__text .idea__name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -1036,14 +1046,13 @@
 
 .today-ideas__actions {
   display: flex;
-  flex-direction: column;
   gap: 4px;
 }
 
 .today-ideas__place {
   border: none;
   border-radius: 999px;
-  background: var(--surface);
+  background: var(--teal-tint);
   color: var(--teal-dark);
   font-size: 12px;
   font-weight: 600;
